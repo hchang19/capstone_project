@@ -1,3 +1,9 @@
 [submodule "libs/degpt"]
 	path = libs/degpt
 	url = https://github.com/PeiweiHu/DeGPT.git
+[submodule "libs/cinspector"]
+	path = libs/cinspector
+	url = https://github.com/PeiweiHu/cinspector
+[submodule "libs/chatmanager"]
+	path = libs/chatmanager
+	url = https://github.com/PeiweiHu/chatmanager
