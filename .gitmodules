@@ -1,0 +1,3 @@
+[submodule "libs/degpt"]
+	path = libs/degpt
+	url = https://github.com/PeiweiHu/DeGPT.git
