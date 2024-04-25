@@ -7,3 +7,6 @@
 [submodule "libs/chatmanager"]
 	path = libs/chatmanager
 	url = https://github.com/PeiweiHu/chatmanager
+[submodule "libs/sven"]
+	path = libs/sven
+	url = https://github.com/eth-sri/sven.git
