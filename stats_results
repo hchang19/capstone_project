@@ -1,0 +1,20 @@
+              func_name vul_type  true_label  pred_label
+0  ImagingLibTiffDecode  cwe-190           1           1
+1  ImagingLibTiffDecode  cwe-190           0           1
+2         futex_requeue  cwe-190           1           1
+3         futex_requeue  cwe-190           0           1
+4         _gd2GetHeader  cwe-190           1           1
+          correct_count  total_count  accuracy
+vul_type                                      
+cwe-022              46          102  0.450980
+cwe-078              96          190  0.505263
+cwe-079              48           90  0.533333
+cwe-089             194          367  0.528610
+cwe-125             141          259  0.544402
+cwe-190              36           76  0.473684
+cwe-416              53          111  0.477477
+cwe-476              74          140  0.528571
+cwe-787              45          100  0.450000
+Highest Accuracy Group: cwe-125 with Accuracy: 0.54
+Lowest Accuracy Group: cwe-787 with Accuracy: 0.45
+Overall Accuracy: 0.51
