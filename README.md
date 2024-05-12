@@ -1,0 +1,43 @@
+# LLM Assisted Binary Analysis
+
+
+## Abstract
+Briefly describe what your project does and its main goal.
+
+## Requirements
+
+### Package requirements
+This project is developed on Python 3.12.2. 
+It is suggested you create a package manager (i.e. conda)
+Please install all the python libaries via
+```
+pip install -r requirements.txt
+```
+
+### Submodule Requirement
+The one that truly matter is `sven`.
+```
+git submodule update --init --recursive 
+```
+
+### API Keys
+This project makes call to ChatGPT4 (more may be added). Please specify your api keys in a `.env` file as shown below.
+
+`.env`
+```
+OPENAI_API_KEY="{API_KEY_HERE}"
+```
+
+## Files
+- `stats.py` - help you clean and gather statistics from scanner results
+- `scan.py` - used to evaluate the capability of ChatGPT4 (by OpenAI) to detect vulnerabilities in the sven code base.
+- `prompt.json` - the prompt formats to be used by `scan.py`
+
+## How to use scan.py
+
+This will give you all the input parameters that you need
+```
+scan.py --help
+```
+
+
