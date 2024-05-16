@@ -5,6 +5,10 @@ import os
 import dotenv
 import openai
 
+from utils import read_jsonl_to_json, list_jsonl_files
+from schemas import UserCodePrompt, ParsedGPTCodeResponse
+
+
 dotenv.load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 assert (OPENAI_API_KEY and "Pleae set api key")
@@ -37,21 +41,7 @@ def setup_logger(file_path_to_scanner_log):
     
     return logger
 
-def read_jsonl_to_json(filename, logger):
-    """Reads a JSONL file and returns a list of dictionaries, logs errors if any."""
-    data = []
-    try:
-        with open(filename, 'r') as file:
-            for line in file:
-                try:
-                    data.append(json.loads(line))
-                except json.JSONDecodeError as e:
-                    logger.error(f"Error decoding JSON from line: {line.strip()} - Error: {str(e)}")
-        return data
-    except FileNotFoundError as e:
-        logger.error(f"File not found: {filename} - Error: {str(e)}")
-    except Exception as e:
-        logger.error(f"An error occurred while reading the file: {filename} - Error: {str(e)}")
+
 
 def call_chatgpt4(user_prompt_data, logger):
     
@@ -70,49 +60,6 @@ def call_chatgpt4(user_prompt_data, logger):
         logger.error(f"An error occurred when calling openai endpoint: {e}")
     return None
 
-def list_files(directory):
-    """ List all files in a given directory """
-    files = []  # List to store file names
-    # Loop through the listing of the directory
-    for item in os.listdir(directory):
-        # TODO Check the file extension type
-
-        full_path = os.path.join(directory, item)
-        # Check if the item is a file and not a directory
-        if os.path.isfile(full_path):
-            files.append(full_path)  # Add the file name to the list
-    return files
-
-class UserCodePrompt:
-    def __init__(self, code):
-        self.role = "user"
-        self.content = f"Code: {code}"
-
-    def to_dict(self):
-        return {"role": self.role, "content": self.content}
-
-class ParsedGPTCodeResponse:
-    def __init__(self, api_response):
-        parsed_message = api_response["choices"][0]["message"]
-        message_content = parsed_message["content"].split(',')
-
-        self.role = parsed_message["role"]
-
-        self.has_vul = message_content[0]
-        self.vul_type = message_content[1]
-        self.vul_line = message_content[2]
-        self.cwe = message_content[3]
-    
-    def to_dict(self):
-        return {
-            "role": self.role,
-            "has_vul": self.has_vul,
-            "vul_type": self.vul_type,
-            "vul_line": self.vul_line,
-            "cwe": self.cwe
-        }
-
-
 def scan_code(file_path_to_jsonl, file_path_to_result, logger, cwe=None):
     #TODO call open api
 
@@ -124,12 +71,10 @@ def scan_code(file_path_to_jsonl, file_path_to_result, logger, cwe=None):
         logger.info(CSV_ENTRY_TEMPLATE)
         file.write(CSV_ENTRY_TEMPLATE + "\n")
     
-    files_to_scan = []
     # if no specific cwe is provided, scan everything
-    if cwe is None:
-        files_to_scan = list_files(file_path_to_jsonl)
-    else:
-        files_to_scan = [file_path_to_jsonl + "/{cwe}.jsonl"]
+    files_to_scan = list_jsonl_files(file_path_to_jsonl)
+    if cwe is not None:
+        files_to_scan = [file for file in files_to_scan if cwe in file]
 
     for file in files_to_scan:
         logger.info(f"Scanning file: {file}")
@@ -184,10 +129,6 @@ def main():
     scan_code(
         args.file_path_to_jsonl, args.file_path_to_result, logger
     )
-
-
-    # Processing the file with the provided arguments
-    # process_file(args.file_path_to_jsonl, args.output_log_file, logger, args.CWE)
 
 if __name__ == "__main__":
     main()

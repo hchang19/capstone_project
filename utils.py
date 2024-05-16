@@ -1,5 +1,8 @@
 import difflib
 from typing import List, Optional, Dict
+import os
+import json
+import logging
 
 PROMPT_PATH = "prompt.json"
 
@@ -44,3 +47,61 @@ def get_prompt(name: str, _type: str, prompt_path: str = PROMPT_PATH) -> Optiona
         if _p['name'] == name and _p['type'] == _type:
             return _p['prompt']
     return None
+
+
+def setup_logger(file_path_to_log):
+    """Set up the logger to log to both file and console."""
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+
+    # Create handlers for file and console
+    file_handler = logging.FileHandler(file_path_to_log, mode="w")
+    console_handler = logging.StreamHandler()
+
+    # Set logging level for handlers
+    file_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
+
+    # Create a formatter and add it to handlers
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # Add handlers to the logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+    
+    return logger
+
+def read_jsonl_to_json(filename, logger):
+    """Reads a JSONL file and returns a list of dictionaries, logs errors if any."""
+    data = []
+    try:
+        with open(filename, 'r') as file:
+            for line in file:
+                try:
+                    data.append(json.loads(line))
+                except json.JSONDecodeError as e:
+                    logger.error(f"Error decoding JSON from line: {line.strip()} - Error: {str(e)}")
+        return data
+    except FileNotFoundError as e:
+        logger.error(f"File not found: {filename} - Error: {str(e)}")
+    except Exception as e:
+        logger.error(f"An error occurred while reading the file: {filename} - Error: {str(e)}")
+
+
+def list_jsonl_files(directory, logger):
+    """ List all jsonl files in a given directory """
+    files = []  # List to store file names
+    # Loop through the listing of the directory
+    for file_name in os.listdir(directory):
+
+        full_path = os.path.join(directory, file_name)
+        # Check if the item is a file and not a directory
+        if os.path.isfile(full_path):
+            files.append(full_path)  # Add the file name to the list
+
+        if not file_name.endswith('.jsonl'):
+            continue
+
+    return files

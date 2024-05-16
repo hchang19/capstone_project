@@ -1,0 +1,50 @@
+[
+    {
+        "input": "Which vul_type is the most common",
+        "query": "SELECT vul_type, COUNT(*) as count FROM raw_sven_vuln GROUP BY vul_type ORDER BY count DESC LIMIT 1;"
+    },
+    {
+        "input": "Given the function_id, give me the code with the vulnerability",
+        "query": "SELECT func_src_before FROM raw_sven_vuln WHERE func_id = function_id;"
+    },
+    {
+        "input": "Given the function_id, give me the code with the security fix",
+        "query": "SELECT func_src_after FROM raw_sven_vuln WHERE func_id = function_id;"
+    },
+    {
+        "input": "Get all records associated with a function_name",
+        "query": "SELECT * FROM raw_sven_vuln WHERE func_name LIKE '%function_name%';"
+    },
+    {
+        "input": "Get the commit link associated with this function_name",
+        "query": "SELECT func_id, func_name, commit_link FROM raw_sven_vuln WHERE func_name LIKE '%function_name%';"
+    },
+    {
+        "input": "Find the total number of record associated with cwe_num",
+        "query": "SELECT COUNT(*) FROM raw_sven_vuln WHERE vul_type LIKE '%cwe_num%'"
+    },
+    {
+        "input": "List the cwe records along with their occurence",
+        "query": " SELECT vul_type, COUNT(*) FROM raw_sven_vuln GROUP BY vul_type;"
+    },
+    {
+        "input": "Get all vulnerable code from along with their cwe",
+        "query": "Select func_src_before, vul_type from raw_sven_vuln"
+    },
+    {
+        "input": "Get all vulnerable code for the specific cwe_num",
+        "query": "Select func_src_before, vul_type from raw_sven_vuln WHERE vul_type LIKE '%cwe_num%'"
+    },
+    {
+        "input": "Get all code snippets from the database",
+        "query": "SELECT func_src_before as code_snippet, vul_type FROM raw_sven_vuln UNION ALL SELECT func_src_after as code_snippet, vul_type FROM raw_sven_vuln;"
+    },
+    {
+        "input": "Scan for all code in the database",
+        "query": "SELECT func_src_before as code_snippet, vul_type FROM raw_sven_vuln UNION ALL SELECT func_src_after as code_snippet, vul_type FROM raw_sven_vuln;"
+    },
+    {
+        "input": "Scan for code for a specific cwe_num",
+        "query": "SELECT func_src_before as code_snippet, vul_type FROM raw_sven_vuln WHERE vul_type LIKE '%cwe_num%' UNION ALL SELECT func_src_after as code_snippet, vul_type FROM raw_sven_vuln WHERE vul_type LIKE '%cwe_num%';"
+    }
+]

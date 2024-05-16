@@ -1,0 +1,13 @@
+2024-05-15 00:49:49,772 - INFO - Connected to mysql
+2024-05-15 00:49:49,775 - INFO - Database 'sven_vuln_db' created or already exists.
+2024-05-15 00:49:49,776 - INFO - Connected to sven_vuln_db
+2024-05-15 00:49:49,779 - INFO - Table 'raw_sven_vuln' created or already exists.
+2024-05-15 00:49:49,779 - INFO - Scanning file: ./cve_dataset/train/cwe-190.jsonl
+2024-05-15 00:49:49,844 - INFO - Scanning file: ./cve_dataset/train/cwe-089.jsonl
+2024-05-15 00:49:50,013 - INFO - Scanning file: ./cve_dataset/train/cwe-787.jsonl
+2024-05-15 00:49:50,072 - INFO - Scanning file: ./cve_dataset/train/cwe-079.jsonl
+2024-05-15 00:49:50,120 - INFO - Scanning file: ./cve_dataset/train/cwe-416.jsonl
+2024-05-15 00:49:50,190 - INFO - Scanning file: ./cve_dataset/train/cwe-125.jsonl
+2024-05-15 00:49:50,379 - INFO - Scanning file: ./cve_dataset/train/cwe-078.jsonl
+2024-05-15 00:49:50,486 - INFO - Scanning file: ./cve_dataset/train/cwe-022.jsonl
+2024-05-15 00:49:50,564 - INFO - Scanning file: ./cve_dataset/train/cwe-476.jsonl
