@@ -1,1 +1,4 @@
-2024-05-16 01:54:32,239 - INFO - Successfully connected to localhost:3306
+2024-05-16 22:16:04,084 - INFO - Successfully connected to localhost:3306
+2024-05-16 22:16:04,121 - INFO - Reading example user queries from user_queries.json
+2024-05-16 22:16:04,121 - INFO - Successfully read example user queries. {'input': 'Which vul_type is the most common', 'query': 'SELECT vul_type, COUNT(*) as count FROM raw_sven_vuln GROUP BY vul_type ORDER BY count DESC LIMIT 1;'}
+2024-05-16 22:16:05,252 - INFO - Successfully created agent executor

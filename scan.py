@@ -8,6 +8,7 @@ import openai
 from utils import read_jsonl_to_json, list_jsonl_files
 from schemas import UserCodePrompt, ParsedGPTCodeResponse
 
+import rag
 
 dotenv.load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -51,7 +52,8 @@ def call_chatgpt4(user_prompt_data, logger):
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
-                DEFAULT_SYSTEM_PROMPT
+                DEFAULT_SYSTEM_PROMPT,
+                user_prompt_data
             ],
             api_key=OPENAI_API_KEY
         )
@@ -72,7 +74,7 @@ def scan_code(file_path_to_jsonl, file_path_to_result, logger, cwe=None):
         file.write(CSV_ENTRY_TEMPLATE + "\n")
     
     # if no specific cwe is provided, scan everything
-    files_to_scan = list_jsonl_files(file_path_to_jsonl)
+    files_to_scan = list_jsonl_files(file_path_to_jsonl, logger)
     if cwe is not None:
         files_to_scan = [file for file in files_to_scan if cwe in file]
 
@@ -96,8 +98,12 @@ def scan_code(file_path_to_jsonl, file_path_to_result, logger, cwe=None):
             }
 
             for code, label in code_with_vul.items():
-                api_response = call_chatgpt4(UserCodePrompt(code).to_dict, logger)
-                parsed_response = ParsedGPTCodeResponse(api_response)
+                # api_response = call_chatgpt4(UserCodePrompt(code).to_dict, logger)
+                user_query = f"{DEFAULT_SYSTEM_PROMPT['content']}. Here is the code: \n {code}"
+                # logger.info(user_query)
+
+                api_output_str = rag.rag_query(user_query, logger)
+                parsed_response = ParsedGPTCodeResponse.from_str(api_output_str)
 
                 is_correct_has_vul = label and parsed_response.has_vul
                 is_correct_vul_type = vul_type and parsed_response.vul_type
@@ -132,3 +138,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    

@@ -32,8 +32,13 @@ assert (OPENAI_API_KEY and "Pleae set api key")
 DEFAULT_LOG_PATH = 'rag.log'
 DEFAULT_USER_QUERY_PATH = 'user_queries.json'
 
-def main():
-    logger = setup_logger(DEFAULT_LOG_PATH)
+def parse_response(api_response):
+    response_object = json.loads(api_response)
+    print(response_object.keys())
+    return response_object['input'], response_object['output']
+def rag_query(user_input, logger = None):
+    if logger is None:
+        logger = setup_logger(DEFAULT_LOG_PATH)
 
     # connect to the database
     mysql_uri = "{0}://{1}:{2}@{3}:{4}/{5}".format(
@@ -75,7 +80,7 @@ def main():
 
     DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
 
-    If the question does not seem related to the database, just return "I don't know" as the answer.
+    If the question does not seem related to the database, just return "I don't have information on this topic" as the answer.
 
     Here are some examples of user inputs and their corresponding SQL queries:"""
 
@@ -101,7 +106,6 @@ def main():
     agent_executor = create_sql_agent(llm, db=db, agent_type="openai-tools", prompt=full_prompt, verbose=True)
     logger.info(f"Successfully created agent executor")
 
-    user_input = input("What will you like to ask?")
     # TODO UNCOMMENT THIS IF YOU CARE ABOUT WHICH QUERIES ARE USED
 
     # prompt_val = full_prompt.invoke(
@@ -114,11 +118,16 @@ def main():
     # )
     # print(prompt_val.to_string())
 
-    response = agent_executor.invoke({
+    api_response = agent_executor.invoke({
         "input": user_input
     })
-    logger.info(f"Response: {response}")
+    
+    api_input, api_output = api_response['input'], api_response['output']
+    logger.info(f"Input Format: {api_input}")
+    logger.info(f"Output: {api_output}")
+    return api_output
 
 
 if __name__ == "__main__":
-    main()
+    user_input = input("What will you like to ask?")
+    rag_query(user_input)

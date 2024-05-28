@@ -1,0 +1,17 @@
+['raw_sven_vuln']
+
+
+[1m> Entering new SQL Agent Executor chain...[0m
+[32;1m[1;3m
+Invoking: `sql_db_query` with `{'query': 'SELECT func_src_before, vul_type, cwe FROM raw_sven_vuln WHERE vul_type IS NOT NULL LIMIT 7'}`
+
+
+[0m[36;1m[1;3mError: (mysql.connector.errors.ProgrammingError) 1054 (42S22): Unknown column 'cwe' in 'field list'
+[SQL: SELECT func_src_before, vul_type, cwe FROM raw_sven_vuln WHERE vul_type IS NOT NULL LIMIT 7]
+(Background on this error at: https://sqlalche.me/e/20/f405)[0m[32;1m[1;3m
+Invoking: `sql_db_query` with `{'query': 'SELECT func_src_before, vul_type FROM raw_sven_vuln WHERE vul_type IS NOT NULL LIMIT 7'}`
+
+
+[0m[36;1m[1;3m[('long dd_get_item_size(struct dump_dir *dd, const char *name)\n{\n    long size = -1;\n    char *iname = concat_path_file(dd->dd_dirname, name);\n    struct stat statbuf;\n\n    if (lstat(iname, &statbuf) == 0 && S_ISREG(statbuf.st_mode))\n        size = statbuf.st_size;\n    else\n    {\n        if (errno...', 'cwe-022'), ("    def zmi_page_request(self, *args, **kwargs):\r\n      request = self.REQUEST\r\n      RESPONSE = request.RESPONSE\r\n      SESSION = request.SESSION\r\n      self._zmi_page_request()\r\n      RESPONSE.setHeader('Expires',DateTime(request['ZMI_TIME']-10000).toZone('GMT+1').rfc822())\r\n     ...", 'cwe-022'), ('def updateKey(client):\n\t"""Updates the contents of a key that already exists in our system.\n\tReturns an error if the specified key doesn\'t exist for the specified user.\n\t"""\n\tglobal NOT_FOUND\n\tglobal CREATED\n\n\tvalidateClient(client)\n\n\tclient_pub_key = loadClientRSAKey(client)\n\ttoken_data =...', 'cwe-022'), ("def create_basename_core(basename):\n    try:\n        basename = basename.casefold()\n    except Exception:\n        basename = basename.lower()\n\n    basename = basename.replace(' ', '-')\n    basename = re.sub(r'<[^>]*>', r'', basename)\n    basename = re.sub(r'[^a-z0-9\\-]', r'', basename)\n   ...", 'cwe-022'), ('    def get(self, key):\n        try:\n            result = self.etcd.get(os.path.join(self.namespace, key))\n        except etcd.EtcdException as err:\n            log_error("Error fetching key %s: [%r]" % (key, repr(err)))\n            raise CSStoreError(\'Error occurred while trying to get key\')\n  ...', 'cwe-022'), ('PHYSICALPATH_FUNC(mod_alias_physical_handler) {\n\tplugin_data *p = p_d;\n\tint uri_len, basedir_len;\n\tchar *uri_ptr;\n\tsize_t k;\n\n\tif (buffer_is_empty(con->physical.path)) return HANDLER_GO_ON;\n\n\tmod_alias_patch_connection(srv, con, p);\n\n\t/* not to include the tailing slash */\n\tbasedir_len =...', 'cwe-022'), ("    def download_check_files(self, filelist):\n        # only admins and allowed users may download\n        if not cherrypy.session['admin']:\n            uo = self.useroptions.forUser(self.getUserId())\n            if not uo.getOptionValue('media.may_download'):\n                return...", 'cwe-022')][0m[32;1m[1;3m1, CWE-022, None, None, None, None, None, None[0m
+
+[1m> Finished chain.[0m

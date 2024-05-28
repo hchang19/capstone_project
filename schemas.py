@@ -34,6 +34,12 @@ class SvenDataRow:
         data = (self.func_id, self.func_name, self.func_src_before, self.func_src_after, self.line_changes, self.char_changes, self.commit_link, self.file_name, self.vul_type)
         return cmd_str, data
 
+def safe_get(list, index):
+    try:
+        return list[index]
+    except IndexError:
+        return None
+
 class UserCodePrompt:
     def __init__(self, code):
         self.role = "user"
@@ -45,19 +51,39 @@ class UserCodePrompt:
     def __repr__(self):
         return f"UserCodePrompt(role={self.role!r}, content={self.content!r})"
 
-
 class ParsedGPTCodeResponse:
-    def __init__(self, api_response):
+    def __init__(self, role, has_vul, vul_type, vul_line, cwe):
+        self.role = role
+
+        self.has_vul = has_vul
+        self.vul_type = vul_type
+        self.vul_line = vul_line
+        self.cwe = cwe
+    
+    @classmethod
+    def from_gpt(cls, api_response):
         parsed_message = api_response["choices"][0]["message"]
         message_content = parsed_message["content"].split(',')
 
-        self.role = parsed_message["role"]
-
-        self.has_vul = message_content[0]
-        self.vul_type = message_content[1]
-        self.vul_line = message_content[2]
-        self.cwe = message_content[3]
+        return cls(
+            parsed_message["role"],
+            message_content[0],
+            message_content[1],
+            message_content[2],
+            message_content[3]
+        )
     
+    @classmethod
+    def from_str(cls, api_response_str):
+        parsed_api_response = api_response_str.split(',')
+        return cls(
+            'user',
+            safe_get(parsed_api_response, 0),
+            safe_get(parsed_api_response, 1),
+            safe_get(parsed_api_response, 2),
+            safe_get(parsed_api_response, 3)
+        )
+        
     def to_dict(self):
         return {
             "role": self.role,
