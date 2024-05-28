@@ -25,7 +25,11 @@ This project makes call to ChatGPT4 (more may be added). Please specify your api
 
 `.env`
 ```
+<<<<<<< HEAD
 OPENAI_API_KEY="{API_KEY_HERE}"
+=======
+OPENAI_API_KEY="api_key_here"
+>>>>>>> 2c24697 (removed api key from readme)
 ```
 
 ## Files
