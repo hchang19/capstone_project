@@ -1,0 +1,47 @@
+{
+    "func_name": "enc_untrusted_create_wait_queue",
+    "func_src_before": "int32_t *enc_untrusted_create_wait_queue() {\n  MessageWriter input;\n  MessageReader output;\n  input.Push<uint64_t>(sizeof(int32_t));\n  const auto status = NonSystemCallDispatcher(\n      ::asylo::host_call::kLocalLifetimeAllocHandler, &input, &output);\n  CheckStatusAndParamCount(status, output, \"enc_untrusted_create_wait_queue\",\n                           2);\n  int32_t *queue = reinterpret_cast<int32_t *>(output.next<uintptr_t>());\n  int klinux_errno = output.next<int>();\n  if (queue == nullptr) {\n    errno = FromkLinuxErrorNumber(klinux_errno);\n  }\n  enc_untrusted_disable_waiting(queue);\n  return queue;\n}",
+    "func_src_after": "int32_t *enc_untrusted_create_wait_queue() {\n  MessageWriter input;\n  MessageReader output;\n  input.Push<uint64_t>(sizeof(int32_t));\n  const auto status = NonSystemCallDispatcher(\n      ::asylo::host_call::kLocalLifetimeAllocHandler, &input, &output);\n  CheckStatusAndParamCount(status, output, \"enc_untrusted_create_wait_queue\",\n                           2);\n  int32_t *queue = reinterpret_cast<int32_t *>(output.next<uintptr_t>());\n  if (!TrustedPrimitives::IsOutsideEnclave(queue, sizeof(int32_t))) {\n    TrustedPrimitives::BestEffortAbort(\n        \"enc_untrusted_create_wait_queue: queue should be in untrusted memory\");\n  }\n  int klinux_errno = output.next<int>();\n  if (queue == nullptr) {\n    errno = FromkLinuxErrorNumber(klinux_errno);\n  }\n  enc_untrusted_disable_waiting(queue);\n  return queue;\n}",
+    "line_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "line_no": 10,
+                "char_start": 435,
+                "char_end": 505,
+                "line": "  if (!TrustedPrimitives::IsOutsideEnclave(queue, sizeof(int32_t))) {\n"
+            },
+            {
+                "line_no": 11,
+                "char_start": 505,
+                "char_end": 545,
+                "line": "    TrustedPrimitives::BestEffortAbort(\n"
+            },
+            {
+                "line_no": 12,
+                "char_start": 545,
+                "char_end": 626,
+                "line": "        \"enc_untrusted_create_wait_queue: queue should be in untrusted memory\");\n"
+            },
+            {
+                "line_no": 13,
+                "char_start": 626,
+                "char_end": 630,
+                "line": "  }\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 438,
+                "char_end": 633,
+                "chars": "f (!TrustedPrimitives::IsOutsideEnclave(queue, sizeof(int32_t))) {\n    TrustedPrimitives::BestEffortAbort(\n        \"enc_untrusted_create_wait_queue: queue should be in untrusted memory\");\n  }\n  i"
+            }
+        ]
+    },
+    "commit_link": "github.com/google/asylo/commit/a37fb6a0e7daf30134dbbf357c9a518a1026aa02",
+    "file_name": "asylo/platform/host_call/trusted/concurrency.cc",
+    "vul_type": "cwe-787"
+}

@@ -1,0 +1,65 @@
+{
+    "func_name": "TiledInputFile::rawTileData",
+    "func_src_before": "TiledInputFile::rawTileData (int &dx, int &dy,\n\t\t\t     int &lx, int &ly,\n                             const char *&pixelData,\n\t\t\t     int &pixelDataSize)\n{\n    try\n    {\n        Lock lock (*_data->_streamData);\n\n        if (!isValidTile (dx, dy, lx, ly))\n            throw IEX_NAMESPACE::ArgExc (\"Tried to read a tile outside \"\n\t\t\t       \"the image file's data window.\");\n\n        TileBuffer *tileBuffer = _data->getTileBuffer (0);\n\n        //\n        // if file is a multipart file, we have to seek to the required tile\n        // since we don't know where the file pointer is\n        //\n        int old_dx=dx;\n        int old_dy=dy;\n        int old_lx=lx;\n        int old_ly=ly;\n        if(isMultiPart(version()))\n        {\n            _data->_streamData->is->seekg(_data->tileOffsets(dx,dy,lx,ly));\n        }\n        readNextTileData (_data->_streamData, _data, dx, dy, lx, ly,\n\t\t\t  tileBuffer->buffer,\n                          pixelDataSize);\n        if(isMultiPart(version()))\n        {\n            if (old_dx!=dx || old_dy !=dy || old_lx!=lx || old_ly!=ly)\n            {\n                throw IEX_NAMESPACE::ArgExc (\"rawTileData read the wrong tile\");\n            }\n        }\n        pixelData = tileBuffer->buffer;\n    }\n    catch (IEX_NAMESPACE::BaseExc &e)\n    {\n        REPLACE_EXC (e, \"Error reading pixel data from image \"\n                     \"file \\\"\" << fileName() << \"\\\". \" << e.what());\n        throw;\n    }\n}",
+    "func_src_after": "TiledInputFile::rawTileData (int &dx, int &dy,\n\t\t\t     int &lx, int &ly,\n                             const char *&pixelData,\n\t\t\t     int &pixelDataSize)\n{\n    try\n    {\n        Lock lock (*_data->_streamData);\n\n        if (!isValidTile (dx, dy, lx, ly))\n            throw IEX_NAMESPACE::ArgExc (\"Tried to read a tile outside \"\n\t\t\t       \"the image file's data window.\");\n\n        TileBuffer *tileBuffer = _data->getTileBuffer (0);\n\n        //\n        // if file is a multipart file, we have to seek to the required tile\n        // since we don't know where the file pointer is\n        //\n        int old_dx=dx;\n        int old_dy=dy;\n        int old_lx=lx;\n        int old_ly=ly;\n        if(isMultiPart(version()))\n        {\n            _data->_streamData->is->seekg(_data->tileOffsets(dx,dy,lx,ly));\n        }\n        readNextTileData (_data->_streamData, _data, dx, dy, lx, ly,\n\t\t\t  tileBuffer->buffer,\n                          pixelDataSize);\n        if(isMultiPart(version()))\n        {\n            if (old_dx!=dx || old_dy !=dy || old_lx!=lx || old_ly!=ly)\n            {\n                throw IEX_NAMESPACE::ArgExc (\"rawTileData read the wrong tile\");\n            }\n        }\n        else\n        {\n             if(!isValidTile (dx, dy, lx, ly) )\n             {\n                 throw IEX_NAMESPACE::IoExc (\"rawTileData read an invalid tile\");\n             }\n        }\n        pixelData = tileBuffer->buffer;\n    }\n    catch (IEX_NAMESPACE::BaseExc &e)\n    {\n        REPLACE_EXC (e, \"Error reading pixel data from image \"\n                     \"file \\\"\" << fileName() << \"\\\". \" << e.what());\n        throw;\n    }\n}",
+    "line_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "line_no": 38,
+                "char_start": 1183,
+                "char_end": 1196,
+                "line": "        else\n"
+            },
+            {
+                "line_no": 39,
+                "char_start": 1196,
+                "char_end": 1206,
+                "line": "        {\n"
+            },
+            {
+                "line_no": 40,
+                "char_start": 1206,
+                "char_end": 1254,
+                "line": "             if(!isValidTile (dx, dy, lx, ly) )\n"
+            },
+            {
+                "line_no": 41,
+                "char_start": 1254,
+                "char_end": 1269,
+                "line": "             {\n"
+            },
+            {
+                "line_no": 42,
+                "char_start": 1269,
+                "char_end": 1351,
+                "line": "                 throw IEX_NAMESPACE::IoExc (\"rawTileData read an invalid tile\");\n"
+            },
+            {
+                "line_no": 43,
+                "char_start": 1351,
+                "char_end": 1366,
+                "line": "             }\n"
+            },
+            {
+                "line_no": 44,
+                "char_start": 1366,
+                "char_end": 1376,
+                "line": "        }\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 1191,
+                "char_end": 1384,
+                "chars": "else\n        {\n             if(!isValidTile (dx, dy, lx, ly) )\n             {\n                 throw IEX_NAMESPACE::IoExc (\"rawTileData read an invalid tile\");\n             }\n        }\n        "
+            }
+        ]
+    },
+    "commit_link": "github.com/AcademySoftwareFoundation/openexr/commit/6bb36714528a9563dd3b92720c5063a1284b86f8",
+    "file_name": "OpenEXR/IlmImf/ImfTiledInputFile.cpp",
+    "vul_type": "cwe-787"
+}

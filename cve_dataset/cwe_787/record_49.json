@@ -1,0 +1,36 @@
+{
+    "func_name": "concat_opt_exact_str",
+    "func_src_before": "concat_opt_exact_str(OptStr* to, UChar* s, UChar* end, OnigEncoding enc)\n{\n  int i, j, len;\n  UChar *p;\n\n  for (i = to->len, p = s; p < end && i < OPT_EXACT_MAXLEN; ) {\n    len = enclen(enc, p);\n    if (i + len > OPT_EXACT_MAXLEN) break;\n    for (j = 0; j < len && p < end; j++)\n      to->s[i++] = *p++;\n  }\n\n  to->len = i;\n\n  if (p >= end)\n    to->reach_end = 1;\n}",
+    "func_src_after": "concat_opt_exact_str(OptStr* to, UChar* s, UChar* end, OnigEncoding enc)\n{\n  int i, j, len;\n  UChar *p;\n\n  for (i = to->len, p = s; p < end && i < OPT_EXACT_MAXLEN; ) {\n    len = enclen(enc, p);\n    if (i + len >= OPT_EXACT_MAXLEN) break;\n    for (j = 0; j < len && p < end; j++)\n      to->s[i++] = *p++;\n  }\n\n  to->len = i;\n\n  if (p >= end)\n    to->reach_end = 1;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 8,
+                "char_start": 195,
+                "char_end": 238,
+                "line": "    if (i + len > OPT_EXACT_MAXLEN) break;\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 8,
+                "char_start": 195,
+                "char_end": 239,
+                "line": "    if (i + len >= OPT_EXACT_MAXLEN) break;\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 212,
+                "char_end": 213,
+                "chars": "="
+            }
+        ]
+    },
+    "commit_link": "github.com/kkos/oniguruma/commit/cbe9f8bd9cfc6c3c87a60fbae58fa1a85db59df0",
+    "file_name": "src/regcomp.c",
+    "vul_type": "cwe-787"
+}

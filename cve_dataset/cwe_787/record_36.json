@@ -1,0 +1,81 @@
+{
+    "func_name": "decode_zbuf",
+    "func_src_before": "static int decode_zbuf(AVBPrint *bp, const uint8_t *data,\n                       const uint8_t *data_end)\n{\n    z_stream zstream;\n    unsigned char *buf;\n    unsigned buf_size;\n    int ret;\n\n    zstream.zalloc = ff_png_zalloc;\n    zstream.zfree  = ff_png_zfree;\n    zstream.opaque = NULL;\n    if (inflateInit(&zstream) != Z_OK)\n        return AVERROR_EXTERNAL;\n    zstream.next_in  = (unsigned char *)data;\n    zstream.avail_in = data_end - data;\n    av_bprint_init(bp, 0, -1);\n\n    while (zstream.avail_in > 0) {\n        av_bprint_get_buffer(bp, 1, &buf, &buf_size);\n        if (!buf_size) {\n            ret = AVERROR(ENOMEM);\n            goto fail;\n        }\n        zstream.next_out  = buf;\n        zstream.avail_out = buf_size;\n        ret = inflate(&zstream, Z_PARTIAL_FLUSH);\n        if (ret != Z_OK && ret != Z_STREAM_END) {\n            ret = AVERROR_EXTERNAL;\n            goto fail;\n        }\n        bp->len += zstream.next_out - buf;\n        if (ret == Z_STREAM_END)\n            break;\n    }\n    inflateEnd(&zstream);\n    bp->str[bp->len] = 0;\n    return 0;\n\nfail:\n    inflateEnd(&zstream);\n    av_bprint_finalize(bp, NULL);\n    return ret;\n}",
+    "func_src_after": "static int decode_zbuf(AVBPrint *bp, const uint8_t *data,\n                       const uint8_t *data_end)\n{\n    z_stream zstream;\n    unsigned char *buf;\n    unsigned buf_size;\n    int ret;\n\n    zstream.zalloc = ff_png_zalloc;\n    zstream.zfree  = ff_png_zfree;\n    zstream.opaque = NULL;\n    if (inflateInit(&zstream) != Z_OK)\n        return AVERROR_EXTERNAL;\n    zstream.next_in  = (unsigned char *)data;\n    zstream.avail_in = data_end - data;\n    av_bprint_init(bp, 0, -1);\n\n    while (zstream.avail_in > 0) {\n        av_bprint_get_buffer(bp, 2, &buf, &buf_size);\n        if (buf_size < 2) {\n            ret = AVERROR(ENOMEM);\n            goto fail;\n        }\n        zstream.next_out  = buf;\n        zstream.avail_out = buf_size - 1;\n        ret = inflate(&zstream, Z_PARTIAL_FLUSH);\n        if (ret != Z_OK && ret != Z_STREAM_END) {\n            ret = AVERROR_EXTERNAL;\n            goto fail;\n        }\n        bp->len += zstream.next_out - buf;\n        if (ret == Z_STREAM_END)\n            break;\n    }\n    inflateEnd(&zstream);\n    bp->str[bp->len] = 0;\n    return 0;\n\nfail:\n    inflateEnd(&zstream);\n    av_bprint_finalize(bp, NULL);\n    return ret;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 19,
+                "char_start": 514,
+                "char_end": 568,
+                "line": "        av_bprint_get_buffer(bp, 1, &buf, &buf_size);\n"
+            },
+            {
+                "line_no": 20,
+                "char_start": 568,
+                "char_end": 593,
+                "line": "        if (!buf_size) {\n"
+            },
+            {
+                "line_no": 25,
+                "char_start": 694,
+                "char_end": 732,
+                "line": "        zstream.avail_out = buf_size;\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 19,
+                "char_start": 514,
+                "char_end": 568,
+                "line": "        av_bprint_get_buffer(bp, 2, &buf, &buf_size);\n"
+            },
+            {
+                "line_no": 20,
+                "char_start": 568,
+                "char_end": 596,
+                "line": "        if (buf_size < 2) {\n"
+            },
+            {
+                "line_no": 25,
+                "char_start": 697,
+                "char_end": 739,
+                "line": "        zstream.avail_out = buf_size - 1;\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 547,
+                "char_end": 548,
+                "chars": "1"
+            },
+            {
+                "char_start": 580,
+                "char_end": 581,
+                "chars": "!"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 547,
+                "char_end": 548,
+                "chars": "2"
+            },
+            {
+                "char_start": 588,
+                "char_end": 592,
+                "chars": " < 2"
+            },
+            {
+                "char_start": 733,
+                "char_end": 737,
+                "chars": " - 1"
+            }
+        ]
+    },
+    "commit_link": "github.com/FFmpeg/FFmpeg/commit/e371f031b942d73e02c090170975561fabd5c264",
+    "file_name": "libavcodec/pngdec.c",
+    "vul_type": "cwe-787"
+}

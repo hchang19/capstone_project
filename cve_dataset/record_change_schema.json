@@ -1,0 +1,144 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Function Vulnerability Patch Record",
+    "type": "object",
+    "properties": {
+        "func_name": {
+            "type": "string",
+            "description": "Name of the function"
+        },
+        "line_changes": {
+            "type": "object",
+            "properties": {
+                "deleted": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "line_no": {
+                                "type": "integer",
+                                "description": "Line number where the change occurred"
+                            },
+                            "char_start": {
+                                "type": "integer",
+                                "description": "Starting character index of the change"
+                            },
+                            "char_end": {
+                                "type": "integer",
+                                "description": "Ending character index of the change"
+                            },
+                            "line": {
+                                "type": "string",
+                                "description": "Content of the deleted line"
+                            }
+                        },
+                        "required": [
+                            "line_no",
+                            "char_start",
+                            "char_end",
+                            "line"
+                        ]
+                    }
+                },
+                "added": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "line_no": {
+                                "type": "integer",
+                                "description": "Line number where the change occurred"
+                            },
+                            "char_start": {
+                                "type": "integer",
+                                "description": "Starting character index of the change"
+                            },
+                            "char_end": {
+                                "type": "integer",
+                                "description": "Ending character index of the change"
+                            },
+                            "line": {
+                                "type": "string",
+                                "description": "Content of the added line"
+                            }
+                        },
+                        "required": [
+                            "line_no",
+                            "char_start",
+                            "char_end",
+                            "line"
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "deleted",
+                "added"
+            ]
+        },
+        "char_changes": {
+            "type": "object",
+            "properties": {
+                "deleted": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "char_start": {
+                                "type": "integer",
+                                "description": "Starting character index of the deleted characters"
+                            },
+                            "char_end": {
+                                "type": "integer",
+                                "description": "Ending character index of the deleted characters"
+                            },
+                            "chars": {
+                                "type": "string",
+                                "description": "Deleted characters"
+                            }
+                        },
+                        "required": [
+                            "char_start",
+                            "char_end",
+                            "chars"
+                        ]
+                    }
+                },
+                "added": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "char_start": {
+                                "type": "integer",
+                                "description": "Starting character index of the added characters"
+                            },
+                            "char_end": {
+                                "type": "integer",
+                                "description": "Ending character index of the added characters"
+                            },
+                            "chars": {
+                                "type": "string",
+                                "description": "Added characters"
+                            }
+                        },
+                        "required": [
+                            "char_start",
+                            "char_end",
+                            "chars"
+                        ]
+                    }
+                }
+            },
+            "required": [
+                "deleted",
+                "added"
+            ]
+        }
+    },
+    "required": [
+        "func_name",
+        "line_changes",
+        "char_changes"
+    ]
+}

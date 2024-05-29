@@ -1,0 +1,53 @@
+{
+    "func_name": "next_state_class",
+    "func_src_before": "next_state_class(CClassNode* cc, OnigCodePoint* vs, enum CCVALTYPE* type,\n\t\t enum CCSTATE* state, ScanEnv* env)\n{\n  int r;\n\n  if (*state == CCS_RANGE)\n    return ONIGERR_CHAR_CLASS_VALUE_AT_END_OF_RANGE;\n\n  if (*state == CCS_VALUE && *type != CCV_CLASS) {\n    if (*type == CCV_SB)\n      BITSET_SET_BIT(cc->bs, (int )(*vs));\n    else if (*type == CCV_CODE_POINT) {\n      r = add_code_range(&(cc->mbuf), env, *vs, *vs);\n      if (r < 0) return r;\n    }\n  }\n\n  *state = CCS_VALUE;\n  *type  = CCV_CLASS;\n  return 0;\n}",
+    "func_src_after": "next_state_class(CClassNode* cc, OnigCodePoint* vs, enum CCVALTYPE* type,\n\t\t enum CCSTATE* state, ScanEnv* env)\n{\n  int r;\n\n  if (*state == CCS_RANGE)\n    return ONIGERR_CHAR_CLASS_VALUE_AT_END_OF_RANGE;\n\n  if (*state == CCS_VALUE && *type != CCV_CLASS) {\n    if (*type == CCV_SB)\n      BITSET_SET_BIT(cc->bs, (int )(*vs));\n    else if (*type == CCV_CODE_POINT) {\n      r = add_code_range(&(cc->mbuf), env, *vs, *vs);\n      if (r < 0) return r;\n    }\n  }\n\n  if (*state != CCS_START)\n    *state = CCS_VALUE;\n\n  *type  = CCV_CLASS;\n  return 0;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 18,
+                "char_start": 456,
+                "char_end": 478,
+                "line": "  *state = CCS_VALUE;\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 18,
+                "char_start": 456,
+                "char_end": 483,
+                "line": "  if (*state != CCS_START)\n"
+            },
+            {
+                "line_no": 19,
+                "char_start": 483,
+                "char_end": 507,
+                "line": "    *state = CCS_VALUE;\n"
+            },
+            {
+                "line_no": 20,
+                "char_start": 507,
+                "char_end": 508,
+                "line": "\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 458,
+                "char_end": 487,
+                "chars": "if (*state != CCS_START)\n    "
+            },
+            {
+                "char_start": 506,
+                "char_end": 507,
+                "chars": "\n"
+            }
+        ]
+    },
+    "commit_link": "github.com/kkos/oniguruma/commit/3b63d12038c8d8fc278e81c942fa9bec7c704c8b",
+    "file_name": "src/regparse.c",
+    "vul_type": "cwe-787"
+}

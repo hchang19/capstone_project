@@ -1,0 +1,58 @@
+{
+    "func_name": "re2c::Scanner::fill",
+    "func_src_before": "bool Scanner::fill(size_t need)\n{\n    if (eof) return false;\n\n    pop_finished_files();\n\n    DASSERT(bot <= tok && tok <= lim);\n    size_t free = static_cast<size_t>(tok - bot);\n    size_t copy = static_cast<size_t>(lim - tok);\n\n    if (free >= need) {\n        memmove(bot, tok, copy);\n        shift_ptrs_and_fpos(-static_cast<ptrdiff_t>(free));\n    }\n    else {\n        BSIZE += std::max(BSIZE, need);\n        char * buf = new char[BSIZE + YYMAXFILL];\n        if (!buf) fatal(\"out of memory\");\n\n        memmove(buf, tok, copy);\n        shift_ptrs_and_fpos(buf - bot);\n        delete [] bot;\n        bot = buf;\n\n        free = BSIZE - copy;\n    }\n\n    if (!read(free)) {\n        eof = lim;\n        memset(lim, 0, YYMAXFILL);\n        lim += YYMAXFILL;\n    }\n\n    return true;\n}",
+    "func_src_after": "bool Scanner::fill(size_t need)\n{\n    if (eof) return false;\n\n    pop_finished_files();\n\n    DASSERT(bot <= tok && tok <= lim);\n    size_t free = static_cast<size_t>(tok - bot);\n    size_t copy = static_cast<size_t>(lim - tok);\n\n    if (free >= need) {\n        memmove(bot, tok, copy);\n        shift_ptrs_and_fpos(-static_cast<ptrdiff_t>(free));\n    }\n    else {\n        BSIZE += std::max(BSIZE, need);\n        char * buf = new char[BSIZE + YYMAXFILL];\n        if (!buf) fatal(\"out of memory\");\n\n        memmove(buf, tok, copy);\n        shift_ptrs_and_fpos(buf - tok);\n        delete [] bot;\n        bot = buf;\n\n        free = BSIZE - copy;\n    }\n\n    DASSERT(lim + free <= bot + BSIZE);\n    if (!read(free)) {\n        eof = lim;\n        memset(lim, 0, YYMAXFILL);\n        lim += YYMAXFILL;\n    }\n\n    return true;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 21,
+                "char_start": 529,
+                "char_end": 569,
+                "line": "        shift_ptrs_and_fpos(buf - bot);\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 21,
+                "char_start": 529,
+                "char_end": 569,
+                "line": "        shift_ptrs_and_fpos(buf - tok);\n"
+            },
+            {
+                "line_no": 28,
+                "char_start": 648,
+                "char_end": 688,
+                "line": "    DASSERT(lim + free <= bot + BSIZE);\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 563,
+                "char_end": 565,
+                "chars": "bo"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 563,
+                "char_end": 564,
+                "chars": "t"
+            },
+            {
+                "char_start": 565,
+                "char_end": 566,
+                "chars": "k"
+            },
+            {
+                "char_start": 647,
+                "char_end": 687,
+                "chars": "\n    DASSERT(lim + free <= bot + BSIZE);"
+            }
+        ]
+    },
+    "commit_link": "github.com/skvadrik/re2c/commit/c4603ba5ce229db83a2a4fb93e6d4b4e3ec3776a",
+    "file_name": "src/parse/scanner.cc",
+    "vul_type": "cwe-787"
+}

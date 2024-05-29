@@ -1,0 +1,248 @@
+{
+    "func_name": "adminchild",
+    "func_src_before": "void * adminchild(struct clientparam* param) {\n int i, res;\n char * buf;\n char username[256];\n char *sb;\n char *req = NULL;\n struct printparam pp;\n int contentlen = 0;\n int isform = 0;\n\n pp.inbuf = 0;\n pp.cp = param;\n\n buf = myalloc(LINESIZE);\n if(!buf) {RETURN(555);}\n i = sockgetlinebuf(param, CLIENT, (unsigned char *)buf, LINESIZE - 1, '\\n', conf.timeouts[STRING_S]);\n if(i<5 || ((buf[0]!='G' || buf[1]!='E' || buf[2]!='T' || buf[3]!=' ' || buf[4]!='/') && \n\t   (buf[0]!='P' || buf[1]!='O' || buf[2]!='S' || buf[3]!='T' || buf[4]!=' ' || buf[5]!='/')))\n {\n\tRETURN(701);\n }\n buf[i] = 0;\n sb = strchr(buf+5, ' ');\n if(!sb){\n\tRETURN(702);\n }\n *sb = 0;\n req = mystrdup(buf + ((*buf == 'P')? 6 : 5));\n while((i = sockgetlinebuf(param, CLIENT, (unsigned char *)buf, LINESIZE - 1, '\\n', conf.timeouts[STRING_S])) > 2){\n\tbuf[i] = 0;\n\tif(i > 19 && (!strncasecmp(buf, \"authorization\", 13))){\n\t\tsb = strchr(buf, ':');\n\t\tif(!sb)continue;\n\t\t++sb;\n\t\twhile(isspace(*sb))sb++;\n\t\tif(!*sb || strncasecmp(sb, \"basic\", 5)){\n\t\t\tcontinue;\n\t\t}\n\t\tsb+=5;\n\t\twhile(isspace(*sb))sb++;\n\t\ti = de64((unsigned char *)sb, (unsigned char *)username, 255);\n\t\tif(i<=0)continue;\n\t\tusername[i] = 0;\n\t\tsb = strchr((char *)username, ':');\n\t\tif(sb){\n\t\t\t*sb = 0;\n\t\t\tif(param->password)myfree(param->password);\n\t\t\tparam->password = (unsigned char *)mystrdup(sb+1);\n\t\t}\n\t\tif(param->username) myfree(param->username);\n\t\tparam->username = (unsigned char *)mystrdup(username);\n\t\tcontinue;\n\t}\n\telse if(i > 15 && (!strncasecmp(buf, \"content-length:\", 15))){\n\t\tsb = buf + 15;\n\t\twhile(isspace(*sb))sb++;\n\t\tcontentlen = atoi(sb);\n\t}\n\telse if(i > 13 && (!strncasecmp(buf, \"content-type:\", 13))){\n\t\tsb = buf + 13;\n\t\twhile(isspace(*sb))sb++;\n\t\tif(!strncasecmp(sb, \"x-www-form-urlencoded\", 21)) isform = 1;\n\t}\n }\n param->operation = ADMIN;\n if(isform && contentlen) {\n\tprintstr(&pp, \"HTTP/1.0 100 Continue\\r\\n\\r\\n\");\n\tstdpr(&pp, NULL, 0);\n }\n res = (*param->srv->authfunc)(param);\n if(res && res != 10) {\n\tprintstr(&pp, authreq);\n\tRETURN(res);\n }\n if(param->srv->singlepacket || param->redirected){\n\tif(*req == 'C') req[1] = 0;\n\telse *req = 0;\n }\n sprintf(buf, ok, conf.stringtable?(char *)conf.stringtable[2]:\"3proxy\", conf.stringtable?(char *)conf.stringtable[2]:\"3[APA3A] tiny proxy\", conf.stringtable?(char *)conf.stringtable[3]:\"\");\n if(*req != 'S') printstr(&pp, buf);\n switch(*req){\n\tcase 'C':\n\t\tprintstr(&pp, counters);\n\t\t{\n\t\t\tstruct trafcount *cp; \n\t\t\tint num = 0;\n\t\t\tfor(cp = conf.trafcounter; cp; cp = cp->next, num++){\n\t\t\t int inbuf = 0;\n\n\t\t\t if(cp->ace && (param->srv->singlepacket || param->redirected)){\n\t\t\t\tif(!ACLmatches(cp->ace, param))continue;\n\t\t\t }\n\t\t\t if(req[1] == 'S' && atoi(req+2) == num) cp->disabled=0;\n\t\t\t if(req[1] == 'D' && atoi(req+2) == num) cp->disabled=1;\n\t\t\t inbuf += sprintf(buf,\t\"<tr>\"\n\t\t\t\t\t\t\"<td>%s</td><td><A HREF=\\'/C%c%d\\'>%s</A></td><td>\",\n\t\t\t\t\t\t(cp->comment)?cp->comment:\"&nbsp;\",\n\t\t\t\t\t\t(cp->disabled)?'S':'D',\n\t\t\t\t\t\tnum,\n\t\t\t\t\t\t(cp->disabled)?\"NO\":\"YES\"\n\t\t\t\t\t);\n\t\t\t if(!cp->ace || !cp->ace->users){\n\t\t\t\tinbuf += sprintf(buf+inbuf, \"<center>ANY</center>\");\n\t\t\t }\n\t\t\t else {\n\t\t\t\tinbuf += printuserlist(buf+inbuf, LINESIZE-800, cp->ace->users, \",<br />\\r\\n\");\n\t\t\t }\n\t\t\t inbuf += sprintf(buf+inbuf, \"</td><td>\");\n\t\t\t if(!cp->ace || !cp->ace->src){\n\t\t\t\tinbuf += sprintf(buf+inbuf, \"<center>ANY</center>\");\n\t\t\t }\n\t\t\t else {\n\t\t\t\tinbuf += printiplist(buf+inbuf, LINESIZE-512, cp->ace->src, \",<br />\\r\\n\");\n\t\t\t }\n\t\t\t inbuf += sprintf(buf+inbuf, \"</td><td>\");\n\t\t\t if(!cp->ace || !cp->ace->dst){\n\t\t\t\tinbuf += sprintf(buf+inbuf, \"<center>ANY</center>\");\n\t\t\t }\n\t\t\t else {\n\t\t\t\tinbuf += printiplist(buf+inbuf, LINESIZE-512, cp->ace->dst, \",<br />\\r\\n\");\n\t\t\t }\n\t\t\t inbuf += sprintf(buf+inbuf, \"</td><td>\");\n\t\t\t if(!cp->ace || !cp->ace->ports){\n\t\t\t\tinbuf += sprintf(buf+inbuf, \"<center>ANY</center>\");\n\t\t\t }\n\t\t\t else {\n\t\t\t\tinbuf += printportlist(buf+inbuf, LINESIZE-128, cp->ace->ports, \",<br />\\r\\n\");\n\t\t\t }\n\t\t\t if(cp->type == NONE) {\n\t\t\t  inbuf += sprintf(buf+inbuf,\t\n\t\t\t\t\t\"</td><td colspan=\\'6\\' align=\\'center\\'>exclude from limitation</td></tr>\\r\\n\"\n\t\t\t\t );\n\t\t\t }\n\t\t\t else {\n\t\t\t  inbuf += sprintf(buf+inbuf,\t\n\t\t\t\t\t\"</td><td>%\"PRINTF_INT64_MODIFIER\"u</td>\"\n\t\t\t\t\t\"<td>MB%s</td>\"\n\t\t\t\t\t\"<td>%\"PRINTF_INT64_MODIFIER\"u</td>\"\n\t\t\t\t\t\"<td>%s</td>\",\n\t\t\t\t cp->traflim64 / (1024 * 1024),\n\t\t\t\t rotations[cp->type],\n\t\t\t\t cp->traf64,\n\t\t\t\t cp->cleared?ctime(&cp->cleared):\"never\"\n\t\t\t\t);\n\t\t\t inbuf += sprintf(buf + inbuf,\n\t\t\t\t\t\"<td>%s</td>\"\n\t\t\t\t\t\"<td>%i</td>\"\n\t\t\t\t\t\"</tr>\\r\\n\",\n\n\t\t\t\t cp->updated?ctime(&cp->updated):\"never\",\n\t\t\t\t cp->number\n\t\t\t\t);\n\t\t\t }\n\t\t\t printstr(&pp, buf);\n\t\t\t}\n\n\t\t}\n\t\tprintstr(&pp, counterstail);\n\t\tbreak;\n\t\t\n\tcase 'R':\n\t\tconf.needreload = 1;\n\t\tprintstr(&pp, \"<h3>Reload scheduled</h3>\");\n\t\tbreak;\n\tcase 'S':\n\t\t{\n\t\t\tif(req[1] == 'X'){\n\t\t\t\tprintstr(&pp, style);\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\tprintstr(&pp, xml);\n\t\t\tprintval(conf.services, TYPE_SERVER, 0, &pp);\n\t\t\tprintstr(&pp, postxml);\n\t\t}\n\t\t\tbreak;\n\tcase 'F':\n\t\t{\n\t\t\tFILE *fp;\n\t\t\tchar buf[256];\n\n\t\t\tfp = confopen();\n\t\t\tif(!fp){\n\t\t\t\tprintstr(&pp, \"<h3><font color=\\\"red\\\">Failed to open config file</font></h3>\");\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\t\tprintstr(&pp, \"<h3>Please be careful editing config file remotely</h3>\");\n\t\t\t\tprintstr(&pp, \"<form method=\\\"POST\\\" action=\\\"/U\\\"><textarea cols=\\\"80\\\" rows=\\\"30\\\" name=\\\"conffile\\\">\");\n\t\t\t\twhile(fgets(buf, 256, fp)){\n\t\t\t\t\tprintstr(&pp, buf);\n\t\t\t\t}\n\t\t\t\tif(!writable) fclose(fp);\n\t\t\t\tprintstr(&pp, \"</textarea><br><input type=\\\"Submit\\\"></form>\");\n\t\t\tbreak;\n\t\t}\n\tcase 'U':\n\t\t{\n\t\t\tint l=0;\n\t\t\tint error = 0;\n\n\t\t\tif(!writable || fseek(writable, 0, 0)){\n\t\t\t\terror = 1;\n\t\t\t}\n\t\t\twhile((i = sockgetlinebuf(param, CLIENT, (unsigned char *)buf, LINESIZE - 1, '+', conf.timeouts[STRING_S])) > 0){\n\t\t\t\tif(i > (contentlen - l)) i = (contentlen - l);\n\t\t\t\tbuf[i] = 0;\n\t\t\t\tif(!l){\n\t\t\t\t\tif(strncasecmp(buf, \"conffile=\", 9)) error = 1;\n\t\t\t\t}\n\t\t\t\tif(!error){\n\t\t\t\t\tdecodeurl((unsigned char *)buf, 1);\n\t\t\t\t\tfprintf(writable, \"%s\", l? buf : buf + 9);\n\t\t\t\t}\n\t\t\t\tl += i;\n\t\t\t\tif(l >= contentlen) break;\n\t\t\t}\n\t\t\tif(writable && !error){\n\t\t\t\tfflush(writable);\n#ifndef _WINCE\n\t\t\t\tftruncate(fileno(writable), ftell(writable));\n#endif\n\t\t\t}\n\t\t\tprintstr(&pp, error?    \"<h3><font color=\\\"red\\\">Config file is not writable</font></h3>Make sure you have \\\"writable\\\" command in configuration file\":\n\t\t\t\t\t\t\"<h3>Configuration updated</h3>\");\n\n\t\t}\n\t\tbreak;\n\tdefault:\n\t\tprintstr(&pp, (char *)conf.stringtable[WEBBANNERS]);\n\t\tbreak;\n }\n if(*req != 'S') printstr(&pp, tail);\n\nCLEANRET:\n\n\n printstr(&pp, NULL);\n if(buf) myfree(buf);\n (*param->srv->logfunc)(param, (unsigned char *)req);\n if(req)myfree(req);\n freeparam(param);\n return (NULL);\n}",
+    "func_src_after": "void * adminchild(struct clientparam* param) {\n int i, res;\n char * buf;\n char username[256];\n char *sb;\n char *req = NULL;\n struct printparam pp;\n unsigned contentlen = 0;\n int isform = 0;\n\n pp.inbuf = 0;\n pp.cp = param;\n\n buf = myalloc(LINESIZE);\n if(!buf) {RETURN(555);}\n i = sockgetlinebuf(param, CLIENT, (unsigned char *)buf, LINESIZE - 1, '\\n', conf.timeouts[STRING_S]);\n if(i<5 || ((buf[0]!='G' || buf[1]!='E' || buf[2]!='T' || buf[3]!=' ' || buf[4]!='/') && \n\t   (buf[0]!='P' || buf[1]!='O' || buf[2]!='S' || buf[3]!='T' || buf[4]!=' ' || buf[5]!='/')))\n {\n\tRETURN(701);\n }\n buf[i] = 0;\n sb = strchr(buf+5, ' ');\n if(!sb){\n\tRETURN(702);\n }\n *sb = 0;\n req = mystrdup(buf + ((*buf == 'P')? 6 : 5));\n while((i = sockgetlinebuf(param, CLIENT, (unsigned char *)buf, LINESIZE - 1, '\\n', conf.timeouts[STRING_S])) > 2){\n\tbuf[i] = 0;\n\tif(i > 19 && (!strncasecmp(buf, \"authorization\", 13))){\n\t\tsb = strchr(buf, ':');\n\t\tif(!sb)continue;\n\t\t++sb;\n\t\twhile(isspace(*sb))sb++;\n\t\tif(!*sb || strncasecmp(sb, \"basic\", 5)){\n\t\t\tcontinue;\n\t\t}\n\t\tsb+=5;\n\t\twhile(isspace(*sb))sb++;\n\t\ti = de64((unsigned char *)sb, (unsigned char *)username, 255);\n\t\tif(i<=0)continue;\n\t\tusername[i] = 0;\n\t\tsb = strchr((char *)username, ':');\n\t\tif(sb){\n\t\t\t*sb = 0;\n\t\t\tif(param->password)myfree(param->password);\n\t\t\tparam->password = (unsigned char *)mystrdup(sb+1);\n\t\t}\n\t\tif(param->username) myfree(param->username);\n\t\tparam->username = (unsigned char *)mystrdup(username);\n\t\tcontinue;\n\t}\n\telse if(i > 15 && (!strncasecmp(buf, \"content-length:\", 15))){\n\t\tsb = buf + 15;\n\t\twhile(isspace(*sb))sb++;\n\t\tsscanf(sb, \"%u\", &contentlen);\n\t\tif(contentlen > LINESIZE*1024) contentlen = 0;\n\t}\n\telse if(i > 13 && (!strncasecmp(buf, \"content-type:\", 13))){\n\t\tsb = buf + 13;\n\t\twhile(isspace(*sb))sb++;\n\t\tif(!strncasecmp(sb, \"x-www-form-urlencoded\", 21)) isform = 1;\n\t}\n }\n param->operation = ADMIN;\n if(isform && contentlen) {\n\tprintstr(&pp, \"HTTP/1.0 100 Continue\\r\\n\\r\\n\");\n\tstdpr(&pp, NULL, 0);\n }\n res = (*param->srv->authfunc)(param);\n if(res && res != 10) {\n\tprintstr(&pp, authreq);\n\tRETURN(res);\n }\n if(param->srv->singlepacket || param->redirected){\n\tif(*req == 'C') req[1] = 0;\n\telse *req = 0;\n }\n sprintf(buf, ok, conf.stringtable?(char *)conf.stringtable[2]:\"3proxy\", conf.stringtable?(char *)conf.stringtable[2]:\"3[APA3A] tiny proxy\", conf.stringtable?(char *)conf.stringtable[3]:\"\");\n if(*req != 'S') printstr(&pp, buf);\n switch(*req){\n\tcase 'C':\n\t\tprintstr(&pp, counters);\n\t\t{\n\t\t\tstruct trafcount *cp; \n\t\t\tint num = 0;\n\t\t\tfor(cp = conf.trafcounter; cp; cp = cp->next, num++){\n\t\t\t int inbuf = 0;\n\n\t\t\t if(cp->ace && (param->srv->singlepacket || param->redirected)){\n\t\t\t\tif(!ACLmatches(cp->ace, param))continue;\n\t\t\t }\n\t\t\t if(req[1] == 'S' && atoi(req+2) == num) cp->disabled=0;\n\t\t\t if(req[1] == 'D' && atoi(req+2) == num) cp->disabled=1;\n\t\t\t inbuf += sprintf(buf,\t\"<tr>\"\n\t\t\t\t\t\t\"<td>%s</td><td><A HREF=\\'/C%c%d\\'>%s</A></td><td>\",\n\t\t\t\t\t\t(cp->comment)?cp->comment:\"&nbsp;\",\n\t\t\t\t\t\t(cp->disabled)?'S':'D',\n\t\t\t\t\t\tnum,\n\t\t\t\t\t\t(cp->disabled)?\"NO\":\"YES\"\n\t\t\t\t\t);\n\t\t\t if(!cp->ace || !cp->ace->users){\n\t\t\t\tinbuf += sprintf(buf+inbuf, \"<center>ANY</center>\");\n\t\t\t }\n\t\t\t else {\n\t\t\t\tinbuf += printuserlist(buf+inbuf, LINESIZE-800, cp->ace->users, \",<br />\\r\\n\");\n\t\t\t }\n\t\t\t inbuf += sprintf(buf+inbuf, \"</td><td>\");\n\t\t\t if(!cp->ace || !cp->ace->src){\n\t\t\t\tinbuf += sprintf(buf+inbuf, \"<center>ANY</center>\");\n\t\t\t }\n\t\t\t else {\n\t\t\t\tinbuf += printiplist(buf+inbuf, LINESIZE-512, cp->ace->src, \",<br />\\r\\n\");\n\t\t\t }\n\t\t\t inbuf += sprintf(buf+inbuf, \"</td><td>\");\n\t\t\t if(!cp->ace || !cp->ace->dst){\n\t\t\t\tinbuf += sprintf(buf+inbuf, \"<center>ANY</center>\");\n\t\t\t }\n\t\t\t else {\n\t\t\t\tinbuf += printiplist(buf+inbuf, LINESIZE-512, cp->ace->dst, \",<br />\\r\\n\");\n\t\t\t }\n\t\t\t inbuf += sprintf(buf+inbuf, \"</td><td>\");\n\t\t\t if(!cp->ace || !cp->ace->ports){\n\t\t\t\tinbuf += sprintf(buf+inbuf, \"<center>ANY</center>\");\n\t\t\t }\n\t\t\t else {\n\t\t\t\tinbuf += printportlist(buf+inbuf, LINESIZE-128, cp->ace->ports, \",<br />\\r\\n\");\n\t\t\t }\n\t\t\t if(cp->type == NONE) {\n\t\t\t  inbuf += sprintf(buf+inbuf,\t\n\t\t\t\t\t\"</td><td colspan=\\'6\\' align=\\'center\\'>exclude from limitation</td></tr>\\r\\n\"\n\t\t\t\t );\n\t\t\t }\n\t\t\t else {\n\t\t\t  inbuf += sprintf(buf+inbuf,\t\n\t\t\t\t\t\"</td><td>%\"PRINTF_INT64_MODIFIER\"u</td>\"\n\t\t\t\t\t\"<td>MB%s</td>\"\n\t\t\t\t\t\"<td>%\"PRINTF_INT64_MODIFIER\"u</td>\"\n\t\t\t\t\t\"<td>%s</td>\",\n\t\t\t\t cp->traflim64 / (1024 * 1024),\n\t\t\t\t rotations[cp->type],\n\t\t\t\t cp->traf64,\n\t\t\t\t cp->cleared?ctime(&cp->cleared):\"never\"\n\t\t\t\t);\n\t\t\t inbuf += sprintf(buf + inbuf,\n\t\t\t\t\t\"<td>%s</td>\"\n\t\t\t\t\t\"<td>%i</td>\"\n\t\t\t\t\t\"</tr>\\r\\n\",\n\n\t\t\t\t cp->updated?ctime(&cp->updated):\"never\",\n\t\t\t\t cp->number\n\t\t\t\t);\n\t\t\t }\n\t\t\t printstr(&pp, buf);\n\t\t\t}\n\n\t\t}\n\t\tprintstr(&pp, counterstail);\n\t\tbreak;\n\t\t\n\tcase 'R':\n\t\tconf.needreload = 1;\n\t\tprintstr(&pp, \"<h3>Reload scheduled</h3>\");\n\t\tbreak;\n\tcase 'S':\n\t\t{\n\t\t\tif(req[1] == 'X'){\n\t\t\t\tprintstr(&pp, style);\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\tprintstr(&pp, xml);\n\t\t\tprintval(conf.services, TYPE_SERVER, 0, &pp);\n\t\t\tprintstr(&pp, postxml);\n\t\t}\n\t\t\tbreak;\n\tcase 'F':\n\t\t{\n\t\t\tFILE *fp;\n\t\t\tchar buf[256];\n\n\t\t\tfp = confopen();\n\t\t\tif(!fp){\n\t\t\t\tprintstr(&pp, \"<h3><font color=\\\"red\\\">Failed to open config file</font></h3>\");\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\t\tprintstr(&pp, \"<h3>Please be careful editing config file remotely</h3>\");\n\t\t\t\tprintstr(&pp, \"<form method=\\\"POST\\\" action=\\\"/U\\\" enctype=\\\"application/x-www-form-urlencoded\\\"><textarea cols=\\\"80\\\" rows=\\\"30\\\" name=\\\"conffile\\\">\");\n\t\t\t\twhile(fgets(buf, 256, fp)){\n\t\t\t\t\tprintstr(&pp, buf);\n\t\t\t\t}\n\t\t\t\tif(!writable) fclose(fp);\n\t\t\t\tprintstr(&pp, \"</textarea><br><input type=\\\"Submit\\\"></form>\");\n\t\t\tbreak;\n\t\t}\n\tcase 'U':\n\t\t{\n\t\t\tunsigned l=0;\n\t\t\tint error = 0;\n\n\t\t\tif(!writable || !contentlen || fseek(writable, 0, 0)){\n\t\t\t\terror = 1;\n\t\t\t}\n\t\t\twhile(l < contentlen && (i = sockgetlinebuf(param, CLIENT, (unsigned char *)buf, (contentlen - l) > LINESIZE - 1?LINESIZE - 1:contentlen - l, '+', conf.timeouts[STRING_S])) > 0){\n\t\t\t\tif(i > (contentlen - l)) i = (contentlen - l);\n\t\t\t\tif(!l){\n\t\t\t\t\tif(i<9 || strncasecmp(buf, \"conffile=\", 9)) error = 1;\n\t\t\t\t}\n\t\t\t\tif(!error){\n\t\t\t\t\tbuf[i] = 0;\n\t\t\t\t\tdecodeurl((unsigned char *)buf, 1);\n\t\t\t\t\tfprintf(writable, \"%s\", l? buf : buf + 9);\n\t\t\t\t}\n\t\t\t\tl += i;\n\t\t\t}\n\t\t\tif(writable && !error){\n\t\t\t\tfflush(writable);\n#ifndef _WINCE\n\t\t\t\tftruncate(fileno(writable), ftell(writable));\n#endif\n\t\t\t}\n\t\t\tprintstr(&pp, error?    \"<h3><font color=\\\"red\\\">Config file is not writable</font></h3>Make sure you have \\\"writable\\\" command in configuration file\":\n\t\t\t\t\t\t\"<h3>Configuration updated</h3>\");\n\n\t\t}\n\t\tbreak;\n\tdefault:\n\t\tprintstr(&pp, (char *)conf.stringtable[WEBBANNERS]);\n\t\tbreak;\n }\n if(*req != 'S') printstr(&pp, tail);\n\nCLEANRET:\n\n\n printstr(&pp, NULL);\n if(buf) myfree(buf);\n (*param->srv->logfunc)(param, (unsigned char *)req);\n if(req)myfree(req);\n freeparam(param);\n return (NULL);\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 8,
+                "char_start": 147,
+                "char_end": 168,
+                "line": " int contentlen = 0;\n"
+            },
+            {
+                "line_no": 57,
+                "char_start": 1557,
+                "char_end": 1582,
+                "line": "\t\tcontentlen = atoi(sb);\n"
+            },
+            {
+                "line_no": 187,
+                "char_start": 5131,
+                "char_end": 5242,
+                "line": "\t\t\t\tprintstr(&pp, \"<form method=\\\"POST\\\" action=\\\"/U\\\"><textarea cols=\\\"80\\\" rows=\\\"30\\\" name=\\\"conffile\\\">\");\n"
+            },
+            {
+                "line_no": 197,
+                "char_start": 5432,
+                "char_end": 5444,
+                "line": "\t\t\tint l=0;\n"
+            },
+            {
+                "line_no": 200,
+                "char_start": 5463,
+                "char_end": 5506,
+                "line": "\t\t\tif(!writable || fseek(writable, 0, 0)){\n"
+            },
+            {
+                "line_no": 203,
+                "char_start": 5526,
+                "char_end": 5643,
+                "line": "\t\t\twhile((i = sockgetlinebuf(param, CLIENT, (unsigned char *)buf, LINESIZE - 1, '+', conf.timeouts[STRING_S])) > 0){\n"
+            },
+            {
+                "line_no": 205,
+                "char_start": 5694,
+                "char_end": 5710,
+                "line": "\t\t\t\tbuf[i] = 0;\n"
+            },
+            {
+                "line_no": 207,
+                "char_start": 5722,
+                "char_end": 5775,
+                "line": "\t\t\t\t\tif(strncasecmp(buf, \"conffile=\", 9)) error = 1;\n"
+            },
+            {
+                "line_no": 214,
+                "char_start": 5904,
+                "char_end": 5935,
+                "line": "\t\t\t\tif(l >= contentlen) break;\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 8,
+                "char_start": 147,
+                "char_end": 173,
+                "line": " unsigned contentlen = 0;\n"
+            },
+            {
+                "line_no": 57,
+                "char_start": 1562,
+                "char_end": 1595,
+                "line": "\t\tsscanf(sb, \"%u\", &contentlen);\n"
+            },
+            {
+                "line_no": 58,
+                "char_start": 1595,
+                "char_end": 1644,
+                "line": "\t\tif(contentlen > LINESIZE*1024) contentlen = 0;\n"
+            },
+            {
+                "line_no": 188,
+                "char_start": 5193,
+                "char_end": 5350,
+                "line": "\t\t\t\tprintstr(&pp, \"<form method=\\\"POST\\\" action=\\\"/U\\\" enctype=\\\"application/x-www-form-urlencoded\\\"><textarea cols=\\\"80\\\" rows=\\\"30\\\" name=\\\"conffile\\\">\");\n"
+            },
+            {
+                "line_no": 198,
+                "char_start": 5540,
+                "char_end": 5557,
+                "line": "\t\t\tunsigned l=0;\n"
+            },
+            {
+                "line_no": 201,
+                "char_start": 5576,
+                "char_end": 5634,
+                "line": "\t\t\tif(!writable || !contentlen || fseek(writable, 0, 0)){\n"
+            },
+            {
+                "line_no": 204,
+                "char_start": 5654,
+                "char_end": 5836,
+                "line": "\t\t\twhile(l < contentlen && (i = sockgetlinebuf(param, CLIENT, (unsigned char *)buf, (contentlen - l) > LINESIZE - 1?LINESIZE - 1:contentlen - l, '+', conf.timeouts[STRING_S])) > 0){\n"
+            },
+            {
+                "line_no": 207,
+                "char_start": 5899,
+                "char_end": 5959,
+                "line": "\t\t\t\t\tif(i<9 || strncasecmp(buf, \"conffile=\", 9)) error = 1;\n"
+            },
+            {
+                "line_no": 210,
+                "char_start": 5981,
+                "char_end": 5998,
+                "line": "\t\t\t\t\tbuf[i] = 0;\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 150,
+                "char_end": 151,
+                "chars": "t"
+            },
+            {
+                "char_start": 1570,
+                "char_end": 1571,
+                "chars": "="
+            },
+            {
+                "char_start": 1572,
+                "char_end": 1579,
+                "chars": "atoi(sb"
+            },
+            {
+                "char_start": 5437,
+                "char_end": 5438,
+                "chars": "t"
+            },
+            {
+                "char_start": 5698,
+                "char_end": 5714,
+                "chars": "buf[i] = 0;\n\t\t\t\t"
+            },
+            {
+                "char_start": 5902,
+                "char_end": 5933,
+                "chars": ";\n\t\t\t\tif(l >= contentlen) break"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 148,
+                "char_end": 151,
+                "chars": "uns"
+            },
+            {
+                "char_start": 152,
+                "char_end": 153,
+                "chars": "g"
+            },
+            {
+                "char_start": 154,
+                "char_end": 156,
+                "chars": "ed"
+            },
+            {
+                "char_start": 1564,
+                "char_end": 1582,
+                "chars": "sscanf(sb, \"%u\", &"
+            },
+            {
+                "char_start": 1592,
+                "char_end": 1597,
+                "chars": ");\n\t\t"
+            },
+            {
+                "char_start": 1598,
+                "char_end": 1599,
+                "chars": "f"
+            },
+            {
+                "char_start": 1600,
+                "char_end": 1626,
+                "chars": "contentlen > LINESIZE*1024"
+            },
+            {
+                "char_start": 1627,
+                "char_end": 1642,
+                "chars": " contentlen = 0"
+            },
+            {
+                "char_start": 5247,
+                "char_end": 5293,
+                "chars": " enctype=\\\"application/x-www-form-urlencoded\\\""
+            },
+            {
+                "char_start": 5543,
+                "char_end": 5546,
+                "chars": "uns"
+            },
+            {
+                "char_start": 5547,
+                "char_end": 5548,
+                "chars": "g"
+            },
+            {
+                "char_start": 5549,
+                "char_end": 5551,
+                "chars": "ed"
+            },
+            {
+                "char_start": 5595,
+                "char_end": 5610,
+                "chars": "!contentlen || "
+            },
+            {
+                "char_start": 5663,
+                "char_end": 5681,
+                "chars": "l < contentlen && "
+            },
+            {
+                "char_start": 5737,
+                "char_end": 5756,
+                "chars": " (contentlen - l) >"
+            },
+            {
+                "char_start": 5769,
+                "char_end": 5797,
+                "chars": "?LINESIZE - 1:contentlen - l"
+            },
+            {
+                "char_start": 5907,
+                "char_end": 5914,
+                "chars": "i<9 || "
+            },
+            {
+                "char_start": 5981,
+                "char_end": 5998,
+                "chars": "\t\t\t\t\tbuf[i] = 0;\n"
+            }
+        ]
+    },
+    "commit_link": "github.com/z3APA3A/3proxy/commit/3b67dc844789dc0f00e934270c7b349bcb547865",
+    "file_name": "src/webadmin.c",
+    "vul_type": "cwe-787"
+}

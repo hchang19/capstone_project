@@ -1,0 +1,47 @@
+{
+    "func_name": "add_password",
+    "func_src_before": "static void add_password(AUTH_HDR *request, unsigned char type, CONST char *password, char *secret)\n{\n\tMD5_CTX md5_secret, my_md5;\n\tunsigned char misc[AUTH_VECTOR_LEN];\n\tint i;\n\tint length = strlen(password);\n\tunsigned char hashed[256 + AUTH_PASS_LEN];\t/* can't be longer than this */\n\tunsigned char *vector;\n\tattribute_t *attr;\n\n\tif (length > MAXPASS) {\t\t\t\t/* shorten the password for now */\n\t\tlength = MAXPASS;\n\t}\n\n\tif (length == 0) {\n\t\tlength = AUTH_PASS_LEN;\t\t\t/* 0 maps to 16 */\n\t} if ((length & (AUTH_PASS_LEN - 1)) != 0) {\n\t\tlength += (AUTH_PASS_LEN - 1);\t\t/* round it up */\n\t\tlength &= ~(AUTH_PASS_LEN - 1);\t\t/* chop it off */\n\t}\t\t\t\t\t\t/* 16*N maps to itself */\n\n\tmemset(hashed, 0, length);\n\tmemcpy(hashed, password, strlen(password));\n\n\tattr = find_attribute(request, PW_PASSWORD);\n\n\tif (type == PW_PASSWORD) {\n\t\tvector = request->vector;\n\t} else {\n\t\tvector = attr->data;\t\t\t/* attr CANNOT be NULL here. */\n\t}\n\n\t/* ************************************************************ */\n\t/* encrypt the password */\n\t/* password : e[0] = p[0] ^ MD5(secret + vector) */\n\tMD5Init(&md5_secret);\n\tMD5Update(&md5_secret, (unsigned char *) secret, strlen(secret));\n\tmy_md5 = md5_secret;\t\t\t\t/* so we won't re-do the hash later */\n\tMD5Update(&my_md5, vector, AUTH_VECTOR_LEN);\n\tMD5Final(misc, &my_md5);\t\t\t/* set the final vector */\n\txor(hashed, misc, AUTH_PASS_LEN);\n\n\t/* For each step through, e[i] = p[i] ^ MD5(secret + e[i-1]) */\n\tfor (i = 1; i < (length >> 4); i++) {\n\t\tmy_md5 = md5_secret;\t\t\t/* grab old value of the hash */\n\t\tMD5Update(&my_md5, &hashed[(i-1) * AUTH_PASS_LEN], AUTH_PASS_LEN);\n\t\tMD5Final(misc, &my_md5);\t\t\t/* set the final vector */\n\t\txor(&hashed[i * AUTH_PASS_LEN], misc, AUTH_PASS_LEN);\n\t}\n\n\tif (type == PW_OLD_PASSWORD) {\n\t\tattr = find_attribute(request, PW_OLD_PASSWORD);\n\t}\n\n\tif (!attr) {\n\t\tadd_attribute(request, type, hashed, length);\n\t} else {\n\t\tmemcpy(attr->data, hashed, length); /* overwrite the packet */\n\t}\n}",
+    "func_src_after": "static void add_password(AUTH_HDR *request, unsigned char type, CONST char *password, char *secret)\n{\n\tMD5_CTX md5_secret, my_md5;\n\tunsigned char misc[AUTH_VECTOR_LEN];\n\tint i;\n\tint length = strlen(password);\n\tunsigned char hashed[256 + AUTH_PASS_LEN];\t/* can't be longer than this */\n\tunsigned char *vector;\n\tattribute_t *attr;\n\n\tif (length > MAXPASS) {\t\t\t\t/* shorten the password for now */\n\t\tlength = MAXPASS;\n\t}\n\n\tif (length == 0) {\n\t\tlength = AUTH_PASS_LEN;\t\t\t/* 0 maps to 16 */\n\t} if ((length & (AUTH_PASS_LEN - 1)) != 0) {\n\t\tlength += (AUTH_PASS_LEN - 1);\t\t/* round it up */\n\t\tlength &= ~(AUTH_PASS_LEN - 1);\t\t/* chop it off */\n\t}\t\t\t\t\t\t/* 16*N maps to itself */\n\n\tmemset(hashed, 0, length);\n\tmemcpy(hashed, password, length);\n\n\tattr = find_attribute(request, PW_PASSWORD);\n\n\tif (type == PW_PASSWORD) {\n\t\tvector = request->vector;\n\t} else {\n\t\tvector = attr->data;\t\t\t/* attr CANNOT be NULL here. */\n\t}\n\n\t/* ************************************************************ */\n\t/* encrypt the password */\n\t/* password : e[0] = p[0] ^ MD5(secret + vector) */\n\tMD5Init(&md5_secret);\n\tMD5Update(&md5_secret, (unsigned char *) secret, strlen(secret));\n\tmy_md5 = md5_secret;\t\t\t\t/* so we won't re-do the hash later */\n\tMD5Update(&my_md5, vector, AUTH_VECTOR_LEN);\n\tMD5Final(misc, &my_md5);\t\t\t/* set the final vector */\n\txor(hashed, misc, AUTH_PASS_LEN);\n\n\t/* For each step through, e[i] = p[i] ^ MD5(secret + e[i-1]) */\n\tfor (i = 1; i < (length >> 4); i++) {\n\t\tmy_md5 = md5_secret;\t\t\t/* grab old value of the hash */\n\t\tMD5Update(&my_md5, &hashed[(i-1) * AUTH_PASS_LEN], AUTH_PASS_LEN);\n\t\tMD5Final(misc, &my_md5);\t\t\t/* set the final vector */\n\t\txor(&hashed[i * AUTH_PASS_LEN], misc, AUTH_PASS_LEN);\n\t}\n\n\tif (type == PW_OLD_PASSWORD) {\n\t\tattr = find_attribute(request, PW_OLD_PASSWORD);\n\t}\n\n\tif (!attr) {\n\t\tadd_attribute(request, type, hashed, length);\n\t} else {\n\t\tmemcpy(attr->data, hashed, length); /* overwrite the packet */\n\t}\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 23,
+                "char_start": 698,
+                "char_end": 743,
+                "line": "\tmemcpy(hashed, password, strlen(password));\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 23,
+                "char_start": 698,
+                "char_end": 733,
+                "line": "\tmemcpy(hashed, password, length);\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 724,
+                "char_end": 727,
+                "chars": "str"
+            },
+            {
+                "char_start": 730,
+                "char_end": 740,
+                "chars": "(password)"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 727,
+                "char_end": 730,
+                "chars": "gth"
+            }
+        ]
+    },
+    "commit_link": "github.com/FreeRADIUS/pam_radius/commit/01173ec2426627dbb1e0d96c06c3ffa0b14d36d0",
+    "file_name": "src/pam_radius_auth.c",
+    "vul_type": "cwe-787"
+}

@@ -1,0 +1,130 @@
+{
+    "func_name": "sc_oberthur_read_file",
+    "func_src_before": "sc_oberthur_read_file(struct sc_pkcs15_card *p15card, const char *in_path,\n\t\tunsigned char **out, size_t *out_len,\n\t\tint verify_pin)\n{\n\tstruct sc_context *ctx = p15card->card->ctx;\n\tstruct sc_card *card = p15card->card;\n\tstruct sc_file *file = NULL;\n\tstruct sc_path path;\n\tsize_t sz;\n\tint rv;\n\n\tLOG_FUNC_CALLED(ctx);\n\tif (!in_path || !out || !out_len)\n\t\tLOG_TEST_RET(ctx, SC_ERROR_INVALID_ARGUMENTS, \"Cannot read oberthur file\");\n\n\tsc_log(ctx, \"read file '%s'; verify_pin:%i\", in_path, verify_pin);\n\n\t*out = NULL;\n\t*out_len = 0;\n\n\tsc_format_path(in_path, &path);\n\trv = sc_select_file(card, &path, &file);\n\tif (rv != SC_SUCCESS) {\n\t\tsc_file_free(file);\n\t\tLOG_TEST_RET(ctx, rv, \"Cannot select oberthur file to read\");\n\t}\n\n\tif (file->ef_structure == SC_FILE_EF_TRANSPARENT)\n\t\tsz = file->size;\n\telse\n\t\tsz = (file->record_length + 2) * file->record_count;\n\n\t*out = calloc(sz, 1);\n\tif (*out == NULL) {\n\t\tsc_file_free(file);\n\t\tLOG_TEST_RET(ctx, SC_ERROR_OUT_OF_MEMORY, \"Cannot read oberthur file\");\n\t}\n\n\tif (file->ef_structure == SC_FILE_EF_TRANSPARENT)   {\n\t\trv = sc_read_binary(card, 0, *out, sz, 0);\n\t}\n\telse\t{\n\t\tint rec;\n\t\tint offs = 0;\n\t\tint rec_len = file->record_length;\n\n\t\tfor (rec = 1; ; rec++)   {\n\t\t\trv = sc_read_record(card, rec, *out + offs + 2, rec_len, SC_RECORD_BY_REC_NR);\n\t\t\tif (rv == SC_ERROR_RECORD_NOT_FOUND)   {\n\t\t\t\trv = 0;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\telse if (rv < 0)   {\n\t\t\t\tbreak;\n\t\t\t}\n\n\t\t\trec_len = rv;\n\n\t\t\t*(*out + offs) = 'R';\n\t\t\t*(*out + offs + 1) = rv;\n\n\t\t\toffs += rv + 2;\n\t\t}\n\n\t\tsz = offs;\n\t}\n\n\tsc_log(ctx, \"read oberthur file result %i\", rv);\n\tif (verify_pin && rv == SC_ERROR_SECURITY_STATUS_NOT_SATISFIED)   {\n\t\tstruct sc_pkcs15_object *objs[0x10], *pin_obj = NULL;\n\t\tconst struct sc_acl_entry *acl = sc_file_get_acl_entry(file, SC_AC_OP_READ);\n\t\tint ii;\n\n\t\trv = sc_pkcs15_get_objects(p15card, SC_PKCS15_TYPE_AUTH_PIN, objs, 0x10);\n\t\tif (rv != SC_SUCCESS) {\n\t\t\tsc_file_free(file);\n\t\t\tLOG_TEST_RET(ctx, rv, \"Cannot read oberthur file: get AUTH objects error\");\n\t\t}\n\n\t\tfor (ii=0; ii<rv; ii++)   {\n\t\t\tstruct sc_pkcs15_auth_info *auth_info = (struct sc_pkcs15_auth_info *) objs[ii]->data;\n\t\t\tsc_log(ctx, \"compare PIN/ACL refs:%i/%i, method:%i/%i\",\n\t\t\t\t\tauth_info->attrs.pin.reference, acl->key_ref, auth_info->auth_method, acl->method);\n\t\t\tif (auth_info->attrs.pin.reference == (int)acl->key_ref && auth_info->auth_method == (unsigned)acl->method)   {\n\t\t\t\tpin_obj = objs[ii];\n\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\n\t\tif (!pin_obj || !pin_obj->content.value)    {\n\t\t\trv = SC_ERROR_SECURITY_STATUS_NOT_SATISFIED;\n\t\t}\n\t\telse    {\n\t\t\trv = sc_pkcs15_verify_pin(p15card, pin_obj, pin_obj->content.value, pin_obj->content.len);\n\t\t\tif (!rv)\n\t\t\t\trv = sc_oberthur_read_file(p15card, in_path, out, out_len, 0);\n\t\t}\n\t};\n\n\tsc_file_free(file);\n\n\tif (rv < 0)   {\n\t\tfree(*out);\n\t\t*out = NULL;\n\t\t*out_len = 0;\n\t}\n\n\t*out_len = sz;\n\n\tLOG_FUNC_RETURN(ctx, rv);\n}",
+    "func_src_after": "sc_oberthur_read_file(struct sc_pkcs15_card *p15card, const char *in_path,\n\t\tunsigned char **out, size_t *out_len,\n\t\tint verify_pin)\n{\n\tstruct sc_context *ctx = p15card->card->ctx;\n\tstruct sc_card *card = p15card->card;\n\tstruct sc_file *file = NULL;\n\tstruct sc_path path;\n\tsize_t sz;\n\tint rv;\n\n\tLOG_FUNC_CALLED(ctx);\n\tif (!in_path || !out || !out_len)\n\t\tLOG_TEST_RET(ctx, SC_ERROR_INVALID_ARGUMENTS, \"Cannot read oberthur file\");\n\n\tsc_log(ctx, \"read file '%s'; verify_pin:%i\", in_path, verify_pin);\n\n\t*out = NULL;\n\t*out_len = 0;\n\n\tsc_format_path(in_path, &path);\n\trv = sc_select_file(card, &path, &file);\n\tif (rv != SC_SUCCESS) {\n\t\tsc_file_free(file);\n\t\tLOG_TEST_RET(ctx, rv, \"Cannot select oberthur file to read\");\n\t}\n\n\tif (file->ef_structure == SC_FILE_EF_TRANSPARENT)\n\t\tsz = file->size;\n\telse\n\t\tsz = (file->record_length + 2) * file->record_count;\n\n\t*out = calloc(sz, 1);\n\tif (*out == NULL) {\n\t\tsc_file_free(file);\n\t\tLOG_TEST_RET(ctx, SC_ERROR_OUT_OF_MEMORY, \"Cannot read oberthur file\");\n\t}\n\n\tif (file->ef_structure == SC_FILE_EF_TRANSPARENT)   {\n\t\trv = sc_read_binary(card, 0, *out, sz, 0);\n\t}\n\telse\t{\n\t\tsize_t rec;\n\t\tsize_t offs = 0;\n\t\tsize_t rec_len = file->record_length;\n\n\t\tfor (rec = 1; ; rec++)   {\n\t\t\tif (rec > file->record_count) {\n\t\t\t\trv = 0;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\trv = sc_read_record(card, rec, *out + offs + 2, rec_len, SC_RECORD_BY_REC_NR);\n\t\t\tif (rv == SC_ERROR_RECORD_NOT_FOUND)   {\n\t\t\t\trv = 0;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\telse if (rv < 0)   {\n\t\t\t\tbreak;\n\t\t\t}\n\n\t\t\trec_len = rv;\n\n\t\t\t*(*out + offs) = 'R';\n\t\t\t*(*out + offs + 1) = rv;\n\n\t\t\toffs += rv + 2;\n\t\t}\n\n\t\tsz = offs;\n\t}\n\n\tsc_log(ctx, \"read oberthur file result %i\", rv);\n\tif (verify_pin && rv == SC_ERROR_SECURITY_STATUS_NOT_SATISFIED)   {\n\t\tstruct sc_pkcs15_object *objs[0x10], *pin_obj = NULL;\n\t\tconst struct sc_acl_entry *acl = sc_file_get_acl_entry(file, SC_AC_OP_READ);\n\t\tint ii;\n\n\t\trv = sc_pkcs15_get_objects(p15card, SC_PKCS15_TYPE_AUTH_PIN, objs, 0x10);\n\t\tif (rv != SC_SUCCESS) {\n\t\t\tsc_file_free(file);\n\t\t\tLOG_TEST_RET(ctx, rv, \"Cannot read oberthur file: get AUTH objects error\");\n\t\t}\n\n\t\tfor (ii=0; ii<rv; ii++)   {\n\t\t\tstruct sc_pkcs15_auth_info *auth_info = (struct sc_pkcs15_auth_info *) objs[ii]->data;\n\t\t\tsc_log(ctx, \"compare PIN/ACL refs:%i/%i, method:%i/%i\",\n\t\t\t\t\tauth_info->attrs.pin.reference, acl->key_ref, auth_info->auth_method, acl->method);\n\t\t\tif (auth_info->attrs.pin.reference == (int)acl->key_ref && auth_info->auth_method == (unsigned)acl->method)   {\n\t\t\t\tpin_obj = objs[ii];\n\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\n\t\tif (!pin_obj || !pin_obj->content.value)    {\n\t\t\trv = SC_ERROR_SECURITY_STATUS_NOT_SATISFIED;\n\t\t}\n\t\telse    {\n\t\t\trv = sc_pkcs15_verify_pin(p15card, pin_obj, pin_obj->content.value, pin_obj->content.len);\n\t\t\tif (!rv)\n\t\t\t\trv = sc_oberthur_read_file(p15card, in_path, out, out_len, 0);\n\t\t}\n\t};\n\n\tsc_file_free(file);\n\n\tif (rv < 0)   {\n\t\tfree(*out);\n\t\t*out = NULL;\n\t\t*out_len = 0;\n\t}\n\n\t*out_len = sz;\n\n\tLOG_FUNC_RETURN(ctx, rv);\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 43,
+                "char_start": 1107,
+                "char_end": 1118,
+                "line": "\t\tint rec;\n"
+            },
+            {
+                "line_no": 44,
+                "char_start": 1118,
+                "char_end": 1134,
+                "line": "\t\tint offs = 0;\n"
+            },
+            {
+                "line_no": 45,
+                "char_start": 1134,
+                "char_end": 1171,
+                "line": "\t\tint rec_len = file->record_length;\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 43,
+                "char_start": 1107,
+                "char_end": 1121,
+                "line": "\t\tsize_t rec;\n"
+            },
+            {
+                "line_no": 44,
+                "char_start": 1121,
+                "char_end": 1140,
+                "line": "\t\tsize_t offs = 0;\n"
+            },
+            {
+                "line_no": 45,
+                "char_start": 1140,
+                "char_end": 1180,
+                "line": "\t\tsize_t rec_len = file->record_length;\n"
+            },
+            {
+                "line_no": 48,
+                "char_start": 1210,
+                "char_end": 1245,
+                "line": "\t\t\tif (rec > file->record_count) {\n"
+            },
+            {
+                "line_no": 49,
+                "char_start": 1245,
+                "char_end": 1257,
+                "line": "\t\t\t\trv = 0;\n"
+            },
+            {
+                "line_no": 50,
+                "char_start": 1257,
+                "char_end": 1268,
+                "line": "\t\t\t\tbreak;\n"
+            },
+            {
+                "line_no": 51,
+                "char_start": 1268,
+                "char_end": 1273,
+                "line": "\t\t\t}\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 1110,
+                "char_end": 1111,
+                "chars": "n"
+            },
+            {
+                "char_start": 1121,
+                "char_end": 1122,
+                "chars": "n"
+            },
+            {
+                "char_start": 1137,
+                "char_end": 1138,
+                "chars": "n"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 1109,
+                "char_end": 1110,
+                "chars": "s"
+            },
+            {
+                "char_start": 1111,
+                "char_end": 1114,
+                "chars": "ze_"
+            },
+            {
+                "char_start": 1123,
+                "char_end": 1124,
+                "chars": "s"
+            },
+            {
+                "char_start": 1125,
+                "char_end": 1128,
+                "chars": "ze_"
+            },
+            {
+                "char_start": 1142,
+                "char_end": 1143,
+                "chars": "s"
+            },
+            {
+                "char_start": 1144,
+                "char_end": 1147,
+                "chars": "ze_"
+            },
+            {
+                "char_start": 1209,
+                "char_end": 1272,
+                "chars": "\n\t\t\tif (rec > file->record_count) {\n\t\t\t\trv = 0;\n\t\t\t\tbreak;\n\t\t\t}"
+            }
+        ]
+    },
+    "commit_link": "github.com/OpenSC/OpenSC/commit/6903aebfddc466d966c7b865fae34572bf3ed23e",
+    "file_name": "src/libopensc/pkcs15-oberthur.c",
+    "vul_type": "cwe-787"
+}

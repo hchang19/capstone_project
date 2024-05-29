@@ -1,0 +1,362 @@
+{
+    "func_name": "tflite::ops::builtin::segment_sum::ResizeOutputTensor",
+    "func_src_before": "TfLiteStatus ResizeOutputTensor(TfLiteContext* context,\n                                const TfLiteTensor* data,\n                                const TfLiteTensor* segment_ids,\n                                TfLiteTensor* output) {\n  int max_index = -1;\n  const int segment_id_size = segment_ids->dims->data[0];\n  if (segment_id_size > 0) {\n    max_index = segment_ids->data.i32[segment_id_size - 1];\n  }\n  const int data_rank = NumDimensions(data);\n  TfLiteIntArray* output_shape = TfLiteIntArrayCreate(NumDimensions(data));\n  output_shape->data[0] = max_index + 1;\n  for (int i = 1; i < data_rank; ++i) {\n    output_shape->data[i] = data->dims->data[i];\n  }\n  return context->ResizeTensor(context, output, output_shape);\n}",
+    "func_src_after": "TfLiteStatus ResizeOutputTensor(TfLiteContext* context,\n                                const TfLiteTensor* data,\n                                const TfLiteTensor* segment_ids,\n                                TfLiteTensor* output) {\n  // Segment ids should be of same cardinality as first input dimension and they\n  // should be increasing by at most 1, from 0 (e.g., [0, 0, 1, 2, 3] is valid)\n  const int segment_id_size = segment_ids->dims->data[0];\n  TF_LITE_ENSURE_EQ(context, segment_id_size, data->dims->data[0]);\n  int previous_segment_id = -1;\n  for (int i = 0; i < segment_id_size; i++) {\n    const int current_segment_id = GetTensorData<int32_t>(segment_ids)[i];\n    if (i == 0) {\n      TF_LITE_ENSURE_EQ(context, current_segment_id, 0);\n    } else {\n      int delta = current_segment_id - previous_segment_id;\n      TF_LITE_ENSURE(context, delta == 0 || delta == 1);\n    }\n    previous_segment_id = current_segment_id;\n  }\n\n  const int max_index = previous_segment_id;\n\n  const int data_rank = NumDimensions(data);\n  TfLiteIntArray* output_shape = TfLiteIntArrayCreate(NumDimensions(data));\n  output_shape->data[0] = max_index + 1;\n  for (int i = 1; i < data_rank; ++i) {\n    output_shape->data[i] = data->dims->data[i];\n  }\n  return context->ResizeTensor(context, output, output_shape);\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 5,
+                "char_start": 235,
+                "char_end": 257,
+                "line": "  int max_index = -1;\n"
+            },
+            {
+                "line_no": 7,
+                "char_start": 315,
+                "char_end": 344,
+                "line": "  if (segment_id_size > 0) {\n"
+            },
+            {
+                "line_no": 8,
+                "char_start": 344,
+                "char_end": 404,
+                "line": "    max_index = segment_ids->data.i32[segment_id_size - 1];\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 8,
+                "char_start": 454,
+                "char_end": 522,
+                "line": "  TF_LITE_ENSURE_EQ(context, segment_id_size, data->dims->data[0]);\n"
+            },
+            {
+                "line_no": 9,
+                "char_start": 522,
+                "char_end": 554,
+                "line": "  int previous_segment_id = -1;\n"
+            },
+            {
+                "line_no": 10,
+                "char_start": 554,
+                "char_end": 600,
+                "line": "  for (int i = 0; i < segment_id_size; i++) {\n"
+            },
+            {
+                "line_no": 11,
+                "char_start": 600,
+                "char_end": 675,
+                "line": "    const int current_segment_id = GetTensorData<int32_t>(segment_ids)[i];\n"
+            },
+            {
+                "line_no": 12,
+                "char_start": 675,
+                "char_end": 693,
+                "line": "    if (i == 0) {\n"
+            },
+            {
+                "line_no": 13,
+                "char_start": 693,
+                "char_end": 750,
+                "line": "      TF_LITE_ENSURE_EQ(context, current_segment_id, 0);\n"
+            },
+            {
+                "line_no": 14,
+                "char_start": 750,
+                "char_end": 763,
+                "line": "    } else {\n"
+            },
+            {
+                "line_no": 15,
+                "char_start": 763,
+                "char_end": 823,
+                "line": "      int delta = current_segment_id - previous_segment_id;\n"
+            },
+            {
+                "line_no": 16,
+                "char_start": 823,
+                "char_end": 880,
+                "line": "      TF_LITE_ENSURE(context, delta == 0 || delta == 1);\n"
+            },
+            {
+                "line_no": 17,
+                "char_start": 880,
+                "char_end": 886,
+                "line": "    }\n"
+            },
+            {
+                "line_no": 18,
+                "char_start": 886,
+                "char_end": 932,
+                "line": "    previous_segment_id = current_segment_id;\n"
+            },
+            {
+                "line_no": 20,
+                "char_start": 936,
+                "char_end": 937,
+                "line": "\n"
+            },
+            {
+                "line_no": 21,
+                "char_start": 937,
+                "char_end": 982,
+                "line": "  const int max_index = previous_segment_id;\n"
+            },
+            {
+                "line_no": 22,
+                "char_start": 982,
+                "char_end": 983,
+                "line": "\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 237,
+                "char_end": 238,
+                "chars": "i"
+            },
+            {
+                "char_start": 243,
+                "char_end": 245,
+                "chars": "x_"
+            },
+            {
+                "char_start": 249,
+                "char_end": 250,
+                "chars": "x"
+            },
+            {
+                "char_start": 251,
+                "char_end": 252,
+                "chars": "="
+            },
+            {
+                "char_start": 253,
+                "char_end": 254,
+                "chars": "-"
+            },
+            {
+                "char_start": 255,
+                "char_end": 256,
+                "chars": ";"
+            },
+            {
+                "char_start": 349,
+                "char_end": 351,
+                "chars": "ax"
+            },
+            {
+                "char_start": 356,
+                "char_end": 357,
+                "chars": "x"
+            },
+            {
+                "char_start": 371,
+                "char_end": 373,
+                "chars": "->"
+            },
+            {
+                "char_start": 377,
+                "char_end": 378,
+                "chars": "."
+            },
+            {
+                "char_start": 379,
+                "char_end": 382,
+                "chars": "32["
+            },
+            {
+                "char_start": 395,
+                "char_end": 396,
+                "chars": "z"
+            },
+            {
+                "char_start": 398,
+                "char_end": 399,
+                "chars": "-"
+            },
+            {
+                "char_start": 400,
+                "char_end": 402,
+                "chars": "1]"
+            },
+            {
+                "char_start": 404,
+                "char_end": 407,
+                "chars": "  }"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 237,
+                "char_end": 274,
+                "chars": "// Segment ids should be of same card"
+            },
+            {
+                "char_start": 276,
+                "char_end": 279,
+                "chars": "ali"
+            },
+            {
+                "char_start": 280,
+                "char_end": 284,
+                "chars": "y as"
+            },
+            {
+                "char_start": 285,
+                "char_end": 299,
+                "chars": "first input di"
+            },
+            {
+                "char_start": 300,
+                "char_end": 307,
+                "chars": "ension "
+            },
+            {
+                "char_start": 308,
+                "char_end": 338,
+                "chars": "nd they\n  // should be increas"
+            },
+            {
+                "char_start": 340,
+                "char_end": 364,
+                "chars": "g by at most 1, from 0 ("
+            },
+            {
+                "char_start": 365,
+                "char_end": 369,
+                "chars": ".g.,"
+            },
+            {
+                "char_start": 370,
+                "char_end": 373,
+                "chars": "[0,"
+            },
+            {
+                "char_start": 374,
+                "char_end": 377,
+                "chars": "0, "
+            },
+            {
+                "char_start": 378,
+                "char_end": 395,
+                "chars": ", 2, 3] is valid)"
+            },
+            {
+                "char_start": 456,
+                "char_end": 491,
+                "chars": "TF_LITE_ENSURE_EQ(context, segment_"
+            },
+            {
+                "char_start": 492,
+                "char_end": 556,
+                "chars": "d_size, data->dims->data[0]);\n  int previous_segment_id = -1;\n  "
+            },
+            {
+                "char_start": 557,
+                "char_end": 559,
+                "chars": "or"
+            },
+            {
+                "char_start": 561,
+                "char_end": 576,
+                "chars": "int i = 0; i < "
+            },
+            {
+                "char_start": 591,
+                "char_end": 592,
+                "chars": ";"
+            },
+            {
+                "char_start": 593,
+                "char_end": 656,
+                "chars": "i++) {\n    const int current_segment_id = GetTensorData<int32_t"
+            },
+            {
+                "char_start": 657,
+                "char_end": 687,
+                "chars": "(segment_ids)[i];\n    if (i =="
+            },
+            {
+                "char_start": 697,
+                "char_end": 722,
+                "chars": "  TF_LITE_ENSURE_EQ(conte"
+            },
+            {
+                "char_start": 723,
+                "char_end": 741,
+                "chars": "t, current_segment"
+            },
+            {
+                "char_start": 743,
+                "char_end": 770,
+                "chars": "d, 0);\n    } else {\n      i"
+            },
+            {
+                "char_start": 771,
+                "char_end": 773,
+                "chars": "t "
+            },
+            {
+                "char_start": 775,
+                "char_end": 778,
+                "chars": "lta"
+            },
+            {
+                "char_start": 781,
+                "char_end": 789,
+                "chars": "current_"
+            },
+            {
+                "char_start": 799,
+                "char_end": 809,
+                "chars": " - previou"
+            },
+            {
+                "char_start": 810,
+                "char_end": 820,
+                "chars": "_segment_i"
+            },
+            {
+                "char_start": 821,
+                "char_end": 857,
+                "chars": ";\n      TF_LITE_ENSURE(context, delt"
+            },
+            {
+                "char_start": 858,
+                "char_end": 870,
+                "chars": " == 0 || del"
+            },
+            {
+                "char_start": 872,
+                "char_end": 894,
+                "chars": " == 1);\n    }\n    prev"
+            },
+            {
+                "char_start": 895,
+                "char_end": 899,
+                "chars": "ous_"
+            },
+            {
+                "char_start": 909,
+                "char_end": 919,
+                "chars": " = current"
+            },
+            {
+                "char_start": 922,
+                "char_end": 930,
+                "chars": "gment_id"
+            },
+            {
+                "char_start": 935,
+                "char_end": 982,
+                "chars": "\n\n  const int max_index = previous_segment_id;\n"
+            }
+        ]
+    },
+    "commit_link": "github.com/tensorflow/tensorflow/commit/204945b19e44b57906c9344c0d00120eeeae178a",
+    "file_name": "tensorflow/lite/kernels/segment_sum.cc",
+    "vul_type": "cwe-787"
+}

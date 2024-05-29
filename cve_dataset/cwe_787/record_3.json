@@ -1,0 +1,65 @@
+{
+    "func_name": "mpol_parse_str",
+    "func_src_before": "int mpol_parse_str(char *str, struct mempolicy **mpol)\n{\n\tstruct mempolicy *new = NULL;\n\tunsigned short mode_flags;\n\tnodemask_t nodes;\n\tchar *nodelist = strchr(str, ':');\n\tchar *flags = strchr(str, '=');\n\tint err = 1, mode;\n\n\tif (flags)\n\t\t*flags++ = '\\0';\t/* terminate mode string */\n\n\tif (nodelist) {\n\t\t/* NUL-terminate mode or flags string */\n\t\t*nodelist++ = '\\0';\n\t\tif (nodelist_parse(nodelist, nodes))\n\t\t\tgoto out;\n\t\tif (!nodes_subset(nodes, node_states[N_MEMORY]))\n\t\t\tgoto out;\n\t} else\n\t\tnodes_clear(nodes);\n\n\tmode = match_string(policy_modes, MPOL_MAX, str);\n\tif (mode < 0)\n\t\tgoto out;\n\n\tswitch (mode) {\n\tcase MPOL_PREFERRED:\n\t\t/*\n\t\t * Insist on a nodelist of one node only\n\t\t */\n\t\tif (nodelist) {\n\t\t\tchar *rest = nodelist;\n\t\t\twhile (isdigit(*rest))\n\t\t\t\trest++;\n\t\t\tif (*rest)\n\t\t\t\tgoto out;\n\t\t}\n\t\tbreak;\n\tcase MPOL_INTERLEAVE:\n\t\t/*\n\t\t * Default to online nodes with memory if no nodelist\n\t\t */\n\t\tif (!nodelist)\n\t\t\tnodes = node_states[N_MEMORY];\n\t\tbreak;\n\tcase MPOL_LOCAL:\n\t\t/*\n\t\t * Don't allow a nodelist;  mpol_new() checks flags\n\t\t */\n\t\tif (nodelist)\n\t\t\tgoto out;\n\t\tmode = MPOL_PREFERRED;\n\t\tbreak;\n\tcase MPOL_DEFAULT:\n\t\t/*\n\t\t * Insist on a empty nodelist\n\t\t */\n\t\tif (!nodelist)\n\t\t\terr = 0;\n\t\tgoto out;\n\tcase MPOL_BIND:\n\t\t/*\n\t\t * Insist on a nodelist\n\t\t */\n\t\tif (!nodelist)\n\t\t\tgoto out;\n\t}\n\n\tmode_flags = 0;\n\tif (flags) {\n\t\t/*\n\t\t * Currently, we only support two mutually exclusive\n\t\t * mode flags.\n\t\t */\n\t\tif (!strcmp(flags, \"static\"))\n\t\t\tmode_flags |= MPOL_F_STATIC_NODES;\n\t\telse if (!strcmp(flags, \"relative\"))\n\t\t\tmode_flags |= MPOL_F_RELATIVE_NODES;\n\t\telse\n\t\t\tgoto out;\n\t}\n\n\tnew = mpol_new(mode, mode_flags, &nodes);\n\tif (IS_ERR(new))\n\t\tgoto out;\n\n\t/*\n\t * Save nodes for mpol_to_str() to show the tmpfs mount options\n\t * for /proc/mounts, /proc/pid/mounts and /proc/pid/mountinfo.\n\t */\n\tif (mode != MPOL_PREFERRED)\n\t\tnew->v.nodes = nodes;\n\telse if (nodelist)\n\t\tnew->v.preferred_node = first_node(nodes);\n\telse\n\t\tnew->flags |= MPOL_F_LOCAL;\n\n\t/*\n\t * Save nodes for contextualization: this will be used to \"clone\"\n\t * the mempolicy in a specific context [cpuset] at a later time.\n\t */\n\tnew->w.user_nodemask = nodes;\n\n\terr = 0;\n\nout:\n\t/* Restore string for error message */\n\tif (nodelist)\n\t\t*--nodelist = ':';\n\tif (flags)\n\t\t*--flags = '=';\n\tif (!err)\n\t\t*mpol = new;\n\treturn err;\n}",
+    "func_src_after": "int mpol_parse_str(char *str, struct mempolicy **mpol)\n{\n\tstruct mempolicy *new = NULL;\n\tunsigned short mode_flags;\n\tnodemask_t nodes;\n\tchar *nodelist = strchr(str, ':');\n\tchar *flags = strchr(str, '=');\n\tint err = 1, mode;\n\n\tif (flags)\n\t\t*flags++ = '\\0';\t/* terminate mode string */\n\n\tif (nodelist) {\n\t\t/* NUL-terminate mode or flags string */\n\t\t*nodelist++ = '\\0';\n\t\tif (nodelist_parse(nodelist, nodes))\n\t\t\tgoto out;\n\t\tif (!nodes_subset(nodes, node_states[N_MEMORY]))\n\t\t\tgoto out;\n\t} else\n\t\tnodes_clear(nodes);\n\n\tmode = match_string(policy_modes, MPOL_MAX, str);\n\tif (mode < 0)\n\t\tgoto out;\n\n\tswitch (mode) {\n\tcase MPOL_PREFERRED:\n\t\t/*\n\t\t * Insist on a nodelist of one node only, although later\n\t\t * we use first_node(nodes) to grab a single node, so here\n\t\t * nodelist (or nodes) cannot be empty.\n\t\t */\n\t\tif (nodelist) {\n\t\t\tchar *rest = nodelist;\n\t\t\twhile (isdigit(*rest))\n\t\t\t\trest++;\n\t\t\tif (*rest)\n\t\t\t\tgoto out;\n\t\t\tif (nodes_empty(nodes))\n\t\t\t\tgoto out;\n\t\t}\n\t\tbreak;\n\tcase MPOL_INTERLEAVE:\n\t\t/*\n\t\t * Default to online nodes with memory if no nodelist\n\t\t */\n\t\tif (!nodelist)\n\t\t\tnodes = node_states[N_MEMORY];\n\t\tbreak;\n\tcase MPOL_LOCAL:\n\t\t/*\n\t\t * Don't allow a nodelist;  mpol_new() checks flags\n\t\t */\n\t\tif (nodelist)\n\t\t\tgoto out;\n\t\tmode = MPOL_PREFERRED;\n\t\tbreak;\n\tcase MPOL_DEFAULT:\n\t\t/*\n\t\t * Insist on a empty nodelist\n\t\t */\n\t\tif (!nodelist)\n\t\t\terr = 0;\n\t\tgoto out;\n\tcase MPOL_BIND:\n\t\t/*\n\t\t * Insist on a nodelist\n\t\t */\n\t\tif (!nodelist)\n\t\t\tgoto out;\n\t}\n\n\tmode_flags = 0;\n\tif (flags) {\n\t\t/*\n\t\t * Currently, we only support two mutually exclusive\n\t\t * mode flags.\n\t\t */\n\t\tif (!strcmp(flags, \"static\"))\n\t\t\tmode_flags |= MPOL_F_STATIC_NODES;\n\t\telse if (!strcmp(flags, \"relative\"))\n\t\t\tmode_flags |= MPOL_F_RELATIVE_NODES;\n\t\telse\n\t\t\tgoto out;\n\t}\n\n\tnew = mpol_new(mode, mode_flags, &nodes);\n\tif (IS_ERR(new))\n\t\tgoto out;\n\n\t/*\n\t * Save nodes for mpol_to_str() to show the tmpfs mount options\n\t * for /proc/mounts, /proc/pid/mounts and /proc/pid/mountinfo.\n\t */\n\tif (mode != MPOL_PREFERRED)\n\t\tnew->v.nodes = nodes;\n\telse if (nodelist)\n\t\tnew->v.preferred_node = first_node(nodes);\n\telse\n\t\tnew->flags |= MPOL_F_LOCAL;\n\n\t/*\n\t * Save nodes for contextualization: this will be used to \"clone\"\n\t * the mempolicy in a specific context [cpuset] at a later time.\n\t */\n\tnew->w.user_nodemask = nodes;\n\n\terr = 0;\n\nout:\n\t/* Restore string for error message */\n\tif (nodelist)\n\t\t*--nodelist = ':';\n\tif (flags)\n\t\t*--flags = '=';\n\tif (!err)\n\t\t*mpol = new;\n\treturn err;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 30,
+                "char_start": 637,
+                "char_end": 680,
+                "line": "\t\t * Insist on a nodelist of one node only\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 30,
+                "char_start": 637,
+                "char_end": 696,
+                "line": "\t\t * Insist on a nodelist of one node only, although later\n"
+            },
+            {
+                "line_no": 31,
+                "char_start": 696,
+                "char_end": 757,
+                "line": "\t\t * we use first_node(nodes) to grab a single node, so here\n"
+            },
+            {
+                "line_no": 32,
+                "char_start": 757,
+                "char_end": 799,
+                "line": "\t\t * nodelist (or nodes) cannot be empty.\n"
+            },
+            {
+                "line_no": 40,
+                "char_start": 915,
+                "char_end": 942,
+                "line": "\t\t\tif (nodes_empty(nodes))\n"
+            },
+            {
+                "line_no": 41,
+                "char_start": 942,
+                "char_end": 956,
+                "line": "\t\t\t\tgoto out;\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 679,
+                "char_end": 798,
+                "chars": ", although later\n\t\t * we use first_node(nodes) to grab a single node, so here\n\t\t * nodelist (or nodes) cannot be empty."
+            },
+            {
+                "char_start": 899,
+                "char_end": 940,
+                "chars": ")\n\t\t\t\tgoto out;\n\t\t\tif (nodes_empty(nodes)"
+            }
+        ]
+    },
+    "commit_link": "github.com/torvalds/linux/commit/aa9f7d5172fac9bf1f09e678c35e287a40a7b7dd",
+    "file_name": "mm/mempolicy.c",
+    "vul_type": "cwe-787"
+}

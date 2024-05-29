@@ -1,0 +1,47 @@
+{
+    "func_name": "mwifiex_ret_wmm_get_status",
+    "func_src_before": "int mwifiex_ret_wmm_get_status(struct mwifiex_private *priv,\n\t\t\t       const struct host_cmd_ds_command *resp)\n{\n\tu8 *curr = (u8 *) &resp->params.get_wmm_status;\n\tuint16_t resp_len = le16_to_cpu(resp->size), tlv_len;\n\tint mask = IEEE80211_WMM_IE_AP_QOSINFO_PARAM_SET_CNT_MASK;\n\tbool valid = true;\n\n\tstruct mwifiex_ie_types_data *tlv_hdr;\n\tstruct mwifiex_ie_types_wmm_queue_status *tlv_wmm_qstatus;\n\tstruct ieee_types_wmm_parameter *wmm_param_ie = NULL;\n\tstruct mwifiex_wmm_ac_status *ac_status;\n\n\tmwifiex_dbg(priv->adapter, INFO,\n\t\t    \"info: WMM: WMM_GET_STATUS cmdresp received: %d\\n\",\n\t\t    resp_len);\n\n\twhile ((resp_len >= sizeof(tlv_hdr->header)) && valid) {\n\t\ttlv_hdr = (struct mwifiex_ie_types_data *) curr;\n\t\ttlv_len = le16_to_cpu(tlv_hdr->header.len);\n\n\t\tif (resp_len < tlv_len + sizeof(tlv_hdr->header))\n\t\t\tbreak;\n\n\t\tswitch (le16_to_cpu(tlv_hdr->header.type)) {\n\t\tcase TLV_TYPE_WMMQSTATUS:\n\t\t\ttlv_wmm_qstatus =\n\t\t\t\t(struct mwifiex_ie_types_wmm_queue_status *)\n\t\t\t\ttlv_hdr;\n\t\t\tmwifiex_dbg(priv->adapter, CMD,\n\t\t\t\t    \"info: CMD_RESP: WMM_GET_STATUS:\\t\"\n\t\t\t\t    \"QSTATUS TLV: %d, %d, %d\\n\",\n\t\t\t\t    tlv_wmm_qstatus->queue_index,\n\t\t\t\t    tlv_wmm_qstatus->flow_required,\n\t\t\t\t    tlv_wmm_qstatus->disabled);\n\n\t\t\tac_status = &priv->wmm.ac_status[tlv_wmm_qstatus->\n\t\t\t\t\t\t\t queue_index];\n\t\t\tac_status->disabled = tlv_wmm_qstatus->disabled;\n\t\t\tac_status->flow_required =\n\t\t\t\t\t\ttlv_wmm_qstatus->flow_required;\n\t\t\tac_status->flow_created = tlv_wmm_qstatus->flow_created;\n\t\t\tbreak;\n\n\t\tcase WLAN_EID_VENDOR_SPECIFIC:\n\t\t\t/*\n\t\t\t * Point the regular IEEE IE 2 bytes into the Marvell IE\n\t\t\t *   and setup the IEEE IE type and length byte fields\n\t\t\t */\n\n\t\t\twmm_param_ie =\n\t\t\t\t(struct ieee_types_wmm_parameter *) (curr +\n\t\t\t\t\t\t\t\t    2);\n\t\t\twmm_param_ie->vend_hdr.len = (u8) tlv_len;\n\t\t\twmm_param_ie->vend_hdr.element_id =\n\t\t\t\t\t\tWLAN_EID_VENDOR_SPECIFIC;\n\n\t\t\tmwifiex_dbg(priv->adapter, CMD,\n\t\t\t\t    \"info: CMD_RESP: WMM_GET_STATUS:\\t\"\n\t\t\t\t    \"WMM Parameter Set Count: %d\\n\",\n\t\t\t\t    wmm_param_ie->qos_info_bitmap & mask);\n\n\t\t\tmemcpy((u8 *) &priv->curr_bss_params.bss_descriptor.\n\t\t\t       wmm_ie, wmm_param_ie,\n\t\t\t       wmm_param_ie->vend_hdr.len + 2);\n\n\t\t\tbreak;\n\n\t\tdefault:\n\t\t\tvalid = false;\n\t\t\tbreak;\n\t\t}\n\n\t\tcurr += (tlv_len + sizeof(tlv_hdr->header));\n\t\tresp_len -= (tlv_len + sizeof(tlv_hdr->header));\n\t}\n\n\tmwifiex_wmm_setup_queue_priorities(priv, wmm_param_ie);\n\tmwifiex_wmm_setup_ac_downgrade(priv);\n\n\treturn 0;\n}",
+    "func_src_after": "int mwifiex_ret_wmm_get_status(struct mwifiex_private *priv,\n\t\t\t       const struct host_cmd_ds_command *resp)\n{\n\tu8 *curr = (u8 *) &resp->params.get_wmm_status;\n\tuint16_t resp_len = le16_to_cpu(resp->size), tlv_len;\n\tint mask = IEEE80211_WMM_IE_AP_QOSINFO_PARAM_SET_CNT_MASK;\n\tbool valid = true;\n\n\tstruct mwifiex_ie_types_data *tlv_hdr;\n\tstruct mwifiex_ie_types_wmm_queue_status *tlv_wmm_qstatus;\n\tstruct ieee_types_wmm_parameter *wmm_param_ie = NULL;\n\tstruct mwifiex_wmm_ac_status *ac_status;\n\n\tmwifiex_dbg(priv->adapter, INFO,\n\t\t    \"info: WMM: WMM_GET_STATUS cmdresp received: %d\\n\",\n\t\t    resp_len);\n\n\twhile ((resp_len >= sizeof(tlv_hdr->header)) && valid) {\n\t\ttlv_hdr = (struct mwifiex_ie_types_data *) curr;\n\t\ttlv_len = le16_to_cpu(tlv_hdr->header.len);\n\n\t\tif (resp_len < tlv_len + sizeof(tlv_hdr->header))\n\t\t\tbreak;\n\n\t\tswitch (le16_to_cpu(tlv_hdr->header.type)) {\n\t\tcase TLV_TYPE_WMMQSTATUS:\n\t\t\ttlv_wmm_qstatus =\n\t\t\t\t(struct mwifiex_ie_types_wmm_queue_status *)\n\t\t\t\ttlv_hdr;\n\t\t\tmwifiex_dbg(priv->adapter, CMD,\n\t\t\t\t    \"info: CMD_RESP: WMM_GET_STATUS:\\t\"\n\t\t\t\t    \"QSTATUS TLV: %d, %d, %d\\n\",\n\t\t\t\t    tlv_wmm_qstatus->queue_index,\n\t\t\t\t    tlv_wmm_qstatus->flow_required,\n\t\t\t\t    tlv_wmm_qstatus->disabled);\n\n\t\t\tac_status = &priv->wmm.ac_status[tlv_wmm_qstatus->\n\t\t\t\t\t\t\t queue_index];\n\t\t\tac_status->disabled = tlv_wmm_qstatus->disabled;\n\t\t\tac_status->flow_required =\n\t\t\t\t\t\ttlv_wmm_qstatus->flow_required;\n\t\t\tac_status->flow_created = tlv_wmm_qstatus->flow_created;\n\t\t\tbreak;\n\n\t\tcase WLAN_EID_VENDOR_SPECIFIC:\n\t\t\t/*\n\t\t\t * Point the regular IEEE IE 2 bytes into the Marvell IE\n\t\t\t *   and setup the IEEE IE type and length byte fields\n\t\t\t */\n\n\t\t\twmm_param_ie =\n\t\t\t\t(struct ieee_types_wmm_parameter *) (curr +\n\t\t\t\t\t\t\t\t    2);\n\t\t\twmm_param_ie->vend_hdr.len = (u8) tlv_len;\n\t\t\twmm_param_ie->vend_hdr.element_id =\n\t\t\t\t\t\tWLAN_EID_VENDOR_SPECIFIC;\n\n\t\t\tmwifiex_dbg(priv->adapter, CMD,\n\t\t\t\t    \"info: CMD_RESP: WMM_GET_STATUS:\\t\"\n\t\t\t\t    \"WMM Parameter Set Count: %d\\n\",\n\t\t\t\t    wmm_param_ie->qos_info_bitmap & mask);\n\n\t\t\tif (wmm_param_ie->vend_hdr.len + 2 >\n\t\t\t\tsizeof(struct ieee_types_wmm_parameter))\n\t\t\t\tbreak;\n\n\t\t\tmemcpy((u8 *) &priv->curr_bss_params.bss_descriptor.\n\t\t\t       wmm_ie, wmm_param_ie,\n\t\t\t       wmm_param_ie->vend_hdr.len + 2);\n\n\t\t\tbreak;\n\n\t\tdefault:\n\t\t\tvalid = false;\n\t\t\tbreak;\n\t\t}\n\n\t\tcurr += (tlv_len + sizeof(tlv_hdr->header));\n\t\tresp_len -= (tlv_len + sizeof(tlv_hdr->header));\n\t}\n\n\tmwifiex_wmm_setup_queue_priorities(priv, wmm_param_ie);\n\tmwifiex_wmm_setup_ac_downgrade(priv);\n\n\treturn 0;\n}",
+    "line_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "line_no": 63,
+                "char_start": 2014,
+                "char_end": 2054,
+                "line": "\t\t\tif (wmm_param_ie->vend_hdr.len + 2 >\n"
+            },
+            {
+                "line_no": 64,
+                "char_start": 2054,
+                "char_end": 2099,
+                "line": "\t\t\t\tsizeof(struct ieee_types_wmm_parameter))\n"
+            },
+            {
+                "line_no": 65,
+                "char_start": 2099,
+                "char_end": 2110,
+                "line": "\t\t\t\tbreak;\n"
+            },
+            {
+                "line_no": 66,
+                "char_start": 2110,
+                "char_end": 2111,
+                "line": "\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 2017,
+                "char_end": 2114,
+                "chars": "if (wmm_param_ie->vend_hdr.len + 2 >\n\t\t\t\tsizeof(struct ieee_types_wmm_parameter))\n\t\t\t\tbreak;\n\n\t\t\t"
+            }
+        ]
+    },
+    "commit_link": "github.com/torvalds/linux/commit/3a9b153c5591548612c3955c9600a98150c81875",
+    "file_name": "drivers/net/wireless/marvell/mwifiex/wmm.c",
+    "vul_type": "cwe-787"
+}

@@ -1,0 +1,107 @@
+{
+    "func_name": "idn2_to_ascii_4i",
+    "func_src_before": "idn2_to_ascii_4i (const uint32_t * input, size_t inlen, char * output, int flags)\n{\n  uint32_t *input_u32;\n  uint8_t *input_u8, *output_u8;\n  size_t length;\n  int rc;\n\n  if (!input)\n    {\n      if (output)\n\t*output = 0;\n      return IDN2_OK;\n    }\n\n  input_u32 = (uint32_t *) malloc ((inlen + 1) * sizeof(uint32_t));\n  if (!input_u32)\n    return IDN2_MALLOC;\n\n  u32_cpy (input_u32, input, inlen);\n  input_u32[inlen] = 0;\n\n  input_u8 = u32_to_u8 (input_u32, inlen + 1, NULL, &length);\n  free (input_u32);\n  if (!input_u8)\n    {\n      if (errno == ENOMEM)\n\treturn IDN2_MALLOC;\n      return IDN2_ENCODING_ERROR;\n    }\n\n  rc = idn2_lookup_u8 (input_u8, &output_u8, flags);\n  free (input_u8);\n\n  if (rc == IDN2_OK)\n    {\n      /* wow, this is ugly, but libidn manpage states:\n       * char * out  output zero terminated string that must have room for at\n       * least 63 characters plus the terminating zero.\n       */\n      if (output)\n\tstrcpy (output, (const char *) output_u8);\n\n      free(output_u8);\n    }\n\n  return rc;\n}",
+    "func_src_after": "idn2_to_ascii_4i (const uint32_t * input, size_t inlen, char * output, int flags)\n{\n  uint32_t *input_u32;\n  uint8_t *input_u8, *output_u8;\n  size_t length;\n  int rc;\n\n  if (!input)\n    {\n      if (output)\n\t*output = 0;\n      return IDN2_OK;\n    }\n\n  input_u32 = (uint32_t *) malloc ((inlen + 1) * sizeof(uint32_t));\n  if (!input_u32)\n    return IDN2_MALLOC;\n\n  u32_cpy (input_u32, input, inlen);\n  input_u32[inlen] = 0;\n\n  input_u8 = u32_to_u8 (input_u32, inlen + 1, NULL, &length);\n  free (input_u32);\n  if (!input_u8)\n    {\n      if (errno == ENOMEM)\n\treturn IDN2_MALLOC;\n      return IDN2_ENCODING_ERROR;\n    }\n\n  rc = idn2_lookup_u8 (input_u8, &output_u8, flags);\n  free (input_u8);\n\n  if (rc == IDN2_OK)\n    {\n      /* wow, this is ugly, but libidn manpage states:\n       * char * out  output zero terminated string that must have room for at\n       * least 63 characters plus the terminating zero.\n       */\n      size_t len = strlen ((char *) output_u8);\n\n      if (len > 63)\n        {\n\t  free (output_u8);\n\t  return IDN2_TOO_BIG_DOMAIN;\n        }\n\n      if (output)\n\tstrcpy (output, (char *) output_u8);\n\n      free (output_u8);\n    }\n\n  return rc;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 41,
+                "char_start": 933,
+                "char_end": 977,
+                "line": "\tstrcpy (output, (const char *) output_u8);\n"
+            },
+            {
+                "line_no": 43,
+                "char_start": 978,
+                "char_end": 1001,
+                "line": "      free(output_u8);\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 40,
+                "char_start": 915,
+                "char_end": 963,
+                "line": "      size_t len = strlen ((char *) output_u8);\n"
+            },
+            {
+                "line_no": 41,
+                "char_start": 963,
+                "char_end": 964,
+                "line": "\n"
+            },
+            {
+                "line_no": 42,
+                "char_start": 964,
+                "char_end": 984,
+                "line": "      if (len > 63)\n"
+            },
+            {
+                "line_no": 43,
+                "char_start": 984,
+                "char_end": 994,
+                "line": "        {\n"
+            },
+            {
+                "line_no": 44,
+                "char_start": 994,
+                "char_end": 1015,
+                "line": "\t  free (output_u8);\n"
+            },
+            {
+                "line_no": 45,
+                "char_start": 1015,
+                "char_end": 1046,
+                "line": "\t  return IDN2_TOO_BIG_DOMAIN;\n"
+            },
+            {
+                "line_no": 46,
+                "char_start": 1046,
+                "char_end": 1056,
+                "line": "        }\n"
+            },
+            {
+                "line_no": 47,
+                "char_start": 1056,
+                "char_end": 1057,
+                "line": "\n"
+            },
+            {
+                "line_no": 49,
+                "char_start": 1075,
+                "char_end": 1113,
+                "line": "\tstrcpy (output, (char *) output_u8);\n"
+            },
+            {
+                "line_no": 51,
+                "char_start": 1114,
+                "char_end": 1138,
+                "line": "      free (output_u8);\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 951,
+                "char_end": 957,
+                "chars": "const "
+            }
+        ],
+        "added": [
+            {
+                "char_start": 921,
+                "char_end": 1063,
+                "chars": "size_t len = strlen ((char *) output_u8);\n\n      if (len > 63)\n        {\n\t  free (output_u8);\n\t  return IDN2_TOO_BIG_DOMAIN;\n        }\n\n      "
+            },
+            {
+                "char_start": 1124,
+                "char_end": 1125,
+                "chars": " "
+            }
+        ]
+    },
+    "commit_link": "github.com/libidn/libidn2/commit/e4d1558aa2c1c04a05066ee8600f37603890ba8c",
+    "file_name": "lib/lookup.c",
+    "vul_type": "cwe-787"
+}

@@ -1,0 +1,41 @@
+{
+    "func_name": "next_state_val",
+    "func_src_before": "next_state_val(CClassNode* cc, OnigCodePoint *vs, OnigCodePoint v,\n\t       int* vs_israw, int v_israw,\n\t       enum CCVALTYPE intype, enum CCVALTYPE* type,\n\t       enum CCSTATE* state, ScanEnv* env)\n{\n  int r;\n\n  switch (*state) {\n  case CCS_VALUE:\n    if (*type == CCV_SB) {\n      BITSET_SET_BIT(cc->bs, (int )(*vs));\n    }\n    else if (*type == CCV_CODE_POINT) {\n      r = add_code_range(&(cc->mbuf), env, *vs, *vs);\n      if (r < 0) return r;\n    }\n    break;\n\n  case CCS_RANGE:\n    if (intype == *type) {\n      if (intype == CCV_SB) {\n        if (*vs > 0xff || v > 0xff)\n          return ONIGERR_INVALID_CODE_POINT_VALUE;\n\n        if (*vs > v) {\n          if (IS_SYNTAX_BV(env->syntax, ONIG_SYN_ALLOW_EMPTY_RANGE_IN_CC))\n            goto ccs_range_end;\n          else\n            return ONIGERR_EMPTY_RANGE_IN_CHAR_CLASS;\n        }\n        bitset_set_range(cc->bs, (int )*vs, (int )v);\n      }\n      else {\n        r = add_code_range(&(cc->mbuf), env, *vs, v);\n        if (r < 0) return r;\n      }\n    }\n    else {\n#if 0\n      if (intype == CCV_CODE_POINT && *type == CCV_SB) {\n#endif\n        if (*vs > v) {\n          if (IS_SYNTAX_BV(env->syntax, ONIG_SYN_ALLOW_EMPTY_RANGE_IN_CC))\n            goto ccs_range_end;\n          else\n            return ONIGERR_EMPTY_RANGE_IN_CHAR_CLASS;\n        }\n        bitset_set_range(cc->bs, (int )*vs, (int )(v < 0xff ? v : 0xff));\n        r = add_code_range(&(cc->mbuf), env, (OnigCodePoint )*vs, v);\n        if (r < 0) return r;\n#if 0\n      }\n      else\n        return ONIGERR_MISMATCH_CODE_LENGTH_IN_CLASS_RANGE;\n#endif\n    }\n  ccs_range_end:\n    *state = CCS_COMPLETE;\n    break;\n\n  case CCS_COMPLETE:\n  case CCS_START:\n    *state = CCS_VALUE;\n    break;\n\n  default:\n    break;\n  }\n\n  *vs_israw = v_israw;\n  *vs       = v;\n  *type     = intype;\n  return 0;\n}",
+    "func_src_after": "next_state_val(CClassNode* cc, OnigCodePoint *vs, OnigCodePoint v,\n\t       int* vs_israw, int v_israw,\n\t       enum CCVALTYPE intype, enum CCVALTYPE* type,\n\t       enum CCSTATE* state, ScanEnv* env)\n{\n  int r;\n\n  switch (*state) {\n  case CCS_VALUE:\n    if (*type == CCV_SB) {\n      if (*vs > 0xff)\n          return ONIGERR_INVALID_CODE_POINT_VALUE;\n\n      BITSET_SET_BIT(cc->bs, (int )(*vs));\n    }\n    else if (*type == CCV_CODE_POINT) {\n      r = add_code_range(&(cc->mbuf), env, *vs, *vs);\n      if (r < 0) return r;\n    }\n    break;\n\n  case CCS_RANGE:\n    if (intype == *type) {\n      if (intype == CCV_SB) {\n        if (*vs > 0xff || v > 0xff)\n          return ONIGERR_INVALID_CODE_POINT_VALUE;\n\n        if (*vs > v) {\n          if (IS_SYNTAX_BV(env->syntax, ONIG_SYN_ALLOW_EMPTY_RANGE_IN_CC))\n            goto ccs_range_end;\n          else\n            return ONIGERR_EMPTY_RANGE_IN_CHAR_CLASS;\n        }\n        bitset_set_range(cc->bs, (int )*vs, (int )v);\n      }\n      else {\n        r = add_code_range(&(cc->mbuf), env, *vs, v);\n        if (r < 0) return r;\n      }\n    }\n    else {\n#if 0\n      if (intype == CCV_CODE_POINT && *type == CCV_SB) {\n#endif\n        if (*vs > v) {\n          if (IS_SYNTAX_BV(env->syntax, ONIG_SYN_ALLOW_EMPTY_RANGE_IN_CC))\n            goto ccs_range_end;\n          else\n            return ONIGERR_EMPTY_RANGE_IN_CHAR_CLASS;\n        }\n        bitset_set_range(cc->bs, (int )*vs, (int )(v < 0xff ? v : 0xff));\n        r = add_code_range(&(cc->mbuf), env, (OnigCodePoint )*vs, v);\n        if (r < 0) return r;\n#if 0\n      }\n      else\n        return ONIGERR_MISMATCH_CODE_LENGTH_IN_CLASS_RANGE;\n#endif\n    }\n  ccs_range_end:\n    *state = CCS_COMPLETE;\n    break;\n\n  case CCS_COMPLETE:\n  case CCS_START:\n    *state = CCS_VALUE;\n    break;\n\n  default:\n    break;\n  }\n\n  *vs_israw = v_israw;\n  *vs       = v;\n  *type     = intype;\n  return 0;\n}",
+    "line_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "line_no": 11,
+                "char_start": 276,
+                "char_end": 298,
+                "line": "      if (*vs > 0xff)\n"
+            },
+            {
+                "line_no": 12,
+                "char_start": 298,
+                "char_end": 349,
+                "line": "          return ONIGERR_INVALID_CODE_POINT_VALUE;\n"
+            },
+            {
+                "line_no": 13,
+                "char_start": 349,
+                "char_end": 350,
+                "line": "\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 282,
+                "char_end": 356,
+                "chars": "if (*vs > 0xff)\n          return ONIGERR_INVALID_CODE_POINT_VALUE;\n\n      "
+            }
+        ]
+    },
+    "commit_link": "github.com/kkos/oniguruma/commit/b4bf968ad52afe14e60a2dc8a95d3555c543353a",
+    "file_name": "src/regparse.c",
+    "vul_type": "cwe-787"
+}

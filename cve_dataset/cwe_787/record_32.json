@@ -1,0 +1,36 @@
+{
+    "func_name": "rom_copy",
+    "func_src_before": "int rom_copy(uint8_t *dest, hwaddr addr, size_t size)\n{\n    hwaddr end = addr + size;\n    uint8_t *s, *d = dest;\n    size_t l = 0;\n    Rom *rom;\n\n    QTAILQ_FOREACH(rom, &roms, next) {\n        if (rom->fw_file) {\n            continue;\n        }\n        if (rom->mr) {\n            continue;\n        }\n        if (rom->addr + rom->romsize < addr) {\n            continue;\n        }\n        if (rom->addr > end) {\n            break;\n        }\n\n        d = dest + (rom->addr - addr);\n        s = rom->data;\n        l = rom->datasize;\n\n        if ((d + l) > (dest + size)) {\n            l = dest - d;\n        }\n\n        if (l > 0) {\n            memcpy(d, s, l);\n        }\n\n        if (rom->romsize > rom->datasize) {\n            /* If datasize is less than romsize, it means that we didn't\n             * allocate all the ROM because the trailing data are only zeros.\n             */\n\n            d += l;\n            l = rom->romsize - rom->datasize;\n\n            if ((d + l) > (dest + size)) {\n                /* Rom size doesn't fit in the destination area. Adjust to avoid\n                 * overflow.\n                 */\n                l = dest - d;\n            }\n\n            if (l > 0) {\n                memset(d, 0x0, l);\n            }\n        }\n    }\n\n    return (d + l) - dest;\n}",
+    "func_src_after": "int rom_copy(uint8_t *dest, hwaddr addr, size_t size)\n{\n    hwaddr end = addr + size;\n    uint8_t *s, *d = dest;\n    size_t l = 0;\n    Rom *rom;\n\n    QTAILQ_FOREACH(rom, &roms, next) {\n        if (rom->fw_file) {\n            continue;\n        }\n        if (rom->mr) {\n            continue;\n        }\n        if (rom->addr + rom->romsize < addr) {\n            continue;\n        }\n        if (rom->addr > end || rom->addr < addr) {\n            break;\n        }\n\n        d = dest + (rom->addr - addr);\n        s = rom->data;\n        l = rom->datasize;\n\n        if ((d + l) > (dest + size)) {\n            l = dest - d;\n        }\n\n        if (l > 0) {\n            memcpy(d, s, l);\n        }\n\n        if (rom->romsize > rom->datasize) {\n            /* If datasize is less than romsize, it means that we didn't\n             * allocate all the ROM because the trailing data are only zeros.\n             */\n\n            d += l;\n            l = rom->romsize - rom->datasize;\n\n            if ((d + l) > (dest + size)) {\n                /* Rom size doesn't fit in the destination area. Adjust to avoid\n                 * overflow.\n                 */\n                l = dest - d;\n            }\n\n            if (l > 0) {\n                memset(d, 0x0, l);\n            }\n        }\n    }\n\n    return (d + l) - dest;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 18,
+                "char_start": 379,
+                "char_end": 410,
+                "line": "        if (rom->addr > end) {\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 18,
+                "char_start": 379,
+                "char_end": 430,
+                "line": "        if (rom->addr > end || rom->addr < addr) {\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 406,
+                "char_end": 426,
+                "chars": " || rom->addr < addr"
+            }
+        ]
+    },
+    "commit_link": "github.com/qemu/qemu/commit/4f1c6cb2f9afafda05eab150fd2bd284edce6676",
+    "file_name": "hw/core/loader.c",
+    "vul_type": "cwe-787"
+}

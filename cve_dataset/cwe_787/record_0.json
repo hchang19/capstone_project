@@ -1,0 +1,121 @@
+{
+    "func_name": "rfbHandleAuthResult",
+    "func_src_before": "rfbHandleAuthResult(rfbClient* client)\n{\n    uint32_t authResult=0, reasonLen=0;\n    char *reason=NULL;\n\n    if (!ReadFromRFBServer(client, (char *)&authResult, 4)) return FALSE;\n\n    authResult = rfbClientSwap32IfLE(authResult);\n\n    switch (authResult) {\n    case rfbVncAuthOK:\n      rfbClientLog(\"VNC authentication succeeded\\n\");\n      return TRUE;\n      break;\n    case rfbVncAuthFailed:\n      if (client->major==3 && client->minor>7)\n      {\n        /* we have an error following */\n        if (!ReadFromRFBServer(client, (char *)&reasonLen, 4)) return FALSE;\n        reasonLen = rfbClientSwap32IfLE(reasonLen);\n        reason = malloc((uint64_t)reasonLen+1);\n        if (!ReadFromRFBServer(client, reason, reasonLen)) { free(reason); return FALSE; }\n        reason[reasonLen]=0;\n        rfbClientLog(\"VNC connection failed: %s\\n\",reason);\n        free(reason);\n        return FALSE;\n      }\n      rfbClientLog(\"VNC authentication failed\\n\");\n      return FALSE;\n    case rfbVncAuthTooMany:\n      rfbClientLog(\"VNC authentication failed - too many tries\\n\");\n      return FALSE;\n    }\n\n    rfbClientLog(\"Unknown VNC authentication result: %d\\n\",\n                 (int)authResult);\n    return FALSE;\n}",
+    "func_src_after": "rfbHandleAuthResult(rfbClient* client)\n{\n    uint32_t authResult=0;\n\n    if (!ReadFromRFBServer(client, (char *)&authResult, 4)) return FALSE;\n\n    authResult = rfbClientSwap32IfLE(authResult);\n\n    switch (authResult) {\n    case rfbVncAuthOK:\n      rfbClientLog(\"VNC authentication succeeded\\n\");\n      return TRUE;\n      break;\n    case rfbVncAuthFailed:\n      if (client->major==3 && client->minor>7)\n      {\n        /* we have an error following */\n        ReadReason(client);\n        return FALSE;\n      }\n      rfbClientLog(\"VNC authentication failed\\n\");\n      return FALSE;\n    case rfbVncAuthTooMany:\n      rfbClientLog(\"VNC authentication failed - too many tries\\n\");\n      return FALSE;\n    }\n\n    rfbClientLog(\"Unknown VNC authentication result: %d\\n\",\n                 (int)authResult);\n    return FALSE;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 3,
+                "char_start": 41,
+                "char_end": 81,
+                "line": "    uint32_t authResult=0, reasonLen=0;\n"
+            },
+            {
+                "line_no": 4,
+                "char_start": 81,
+                "char_end": 104,
+                "line": "    char *reason=NULL;\n"
+            },
+            {
+                "line_no": 19,
+                "char_start": 489,
+                "char_end": 566,
+                "line": "        if (!ReadFromRFBServer(client, (char *)&reasonLen, 4)) return FALSE;\n"
+            },
+            {
+                "line_no": 20,
+                "char_start": 566,
+                "char_end": 618,
+                "line": "        reasonLen = rfbClientSwap32IfLE(reasonLen);\n"
+            },
+            {
+                "line_no": 21,
+                "char_start": 618,
+                "char_end": 666,
+                "line": "        reason = malloc((uint64_t)reasonLen+1);\n"
+            },
+            {
+                "line_no": 22,
+                "char_start": 666,
+                "char_end": 757,
+                "line": "        if (!ReadFromRFBServer(client, reason, reasonLen)) { free(reason); return FALSE; }\n"
+            },
+            {
+                "line_no": 23,
+                "char_start": 757,
+                "char_end": 786,
+                "line": "        reason[reasonLen]=0;\n"
+            },
+            {
+                "line_no": 24,
+                "char_start": 786,
+                "char_end": 846,
+                "line": "        rfbClientLog(\"VNC connection failed: %s\\n\",reason);\n"
+            },
+            {
+                "line_no": 25,
+                "char_start": 846,
+                "char_end": 868,
+                "line": "        free(reason);\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 3,
+                "char_start": 41,
+                "char_end": 68,
+                "line": "    uint32_t authResult=0;\n"
+            },
+            {
+                "line_no": 18,
+                "char_start": 453,
+                "char_end": 481,
+                "line": "        ReadReason(client);\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 66,
+                "char_end": 102,
+                "chars": ", reasonLen=0;\n    char *reason=NULL"
+            },
+            {
+                "char_start": 497,
+                "char_end": 502,
+                "chars": "if (!"
+            },
+            {
+                "char_start": 506,
+                "char_end": 510,
+                "chars": "From"
+            },
+            {
+                "char_start": 511,
+                "char_end": 538,
+                "chars": "FBServer(client, (char *)&r"
+            },
+            {
+                "char_start": 543,
+                "char_end": 696,
+                "chars": "Len, 4)) return FALSE;\n        reasonLen = rfbClientSwap32IfLE(reasonLen);\n        reason = malloc((uint64_t)reasonLen+1);\n        if (!ReadFromRFBServer"
+            },
+            {
+                "char_start": 703,
+                "char_end": 865,
+                "chars": ", reason, reasonLen)) { free(reason); return FALSE; }\n        reason[reasonLen]=0;\n        rfbClientLog(\"VNC connection failed: %s\\n\",reason);\n        free(reason"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 68,
+                "char_end": 68,
+                "chars": ""
+            }
+        ]
+    },
+    "commit_link": "github.com/LibVNC/libvncserver/commit/e34bcbb759ca5bef85809967a268fdf214c1ad2c",
+    "file_name": "libvncclient/rfbproto.c",
+    "vul_type": "cwe-787"
+}

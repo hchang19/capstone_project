@@ -1,0 +1,41 @@
+{
+    "func_name": "handle_PORT",
+    "func_src_before": "static void handle_PORT(ctrl_t *ctrl, char *str)\n{\n\tint a, b, c, d, e, f;\n\tchar addr[INET_ADDRSTRLEN];\n\tstruct sockaddr_in sin;\n\n\tif (ctrl->data_sd > 0) {\n\t\tuev_io_stop(&ctrl->data_watcher);\n\t\tclose(ctrl->data_sd);\n\t\tctrl->data_sd = -1;\n\t}\n\n\t/* Convert PORT command's argument to IP address + port */\n\tsscanf(str, \"%d,%d,%d,%d,%d,%d\", &a, &b, &c, &d, &e, &f);\n\tsprintf(addr, \"%d.%d.%d.%d\", a, b, c, d);\n\n\t/* Check IPv4 address using inet_aton(), throw away converted result */\n\tif (!inet_aton(addr, &(sin.sin_addr))) {\n\t\tERR(0, \"Invalid address '%s' given to PORT command\", addr);\n\t\tsend_msg(ctrl->sd, \"500 Illegal PORT command.\\r\\n\");\n\t\treturn;\n\t}\n\n\tstrlcpy(ctrl->data_address, addr, sizeof(ctrl->data_address));\n\tctrl->data_port = e * 256 + f;\n\n\tDBG(\"Client PORT command accepted for %s:%d\", ctrl->data_address, ctrl->data_port);\n\tsend_msg(ctrl->sd, \"200 PORT command successful.\\r\\n\");\n}",
+    "func_src_after": "static void handle_PORT(ctrl_t *ctrl, char *str)\n{\n\tint a, b, c, d, e, f;\n\tchar addr[INET_ADDRSTRLEN];\n\tstruct sockaddr_in sin;\n\n\tif (ctrl->data_sd > 0) {\n\t\tuev_io_stop(&ctrl->data_watcher);\n\t\tclose(ctrl->data_sd);\n\t\tctrl->data_sd = -1;\n\t}\n\n\t/* Convert PORT command's argument to IP address + port */\n\tsscanf(str, \"%d,%d,%d,%d,%d,%d\", &a, &b, &c, &d, &e, &f);\n\tsnprintf(addr, sizeof(addr), \"%d.%d.%d.%d\", a, b, c, d);\n\n\t/* Check IPv4 address using inet_aton(), throw away converted result */\n\tif (!inet_aton(addr, &(sin.sin_addr))) {\n\t\tERR(0, \"Invalid address '%s' given to PORT command\", addr);\n\t\tsend_msg(ctrl->sd, \"500 Illegal PORT command.\\r\\n\");\n\t\treturn;\n\t}\n\n\tstrlcpy(ctrl->data_address, addr, sizeof(ctrl->data_address));\n\tctrl->data_port = e * 256 + f;\n\n\tDBG(\"Client PORT command accepted for %s:%d\", ctrl->data_address, ctrl->data_port);\n\tsend_msg(ctrl->sd, \"200 PORT command successful.\\r\\n\");\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 15,
+                "char_start": 360,
+                "char_end": 403,
+                "line": "\tsprintf(addr, \"%d.%d.%d.%d\", a, b, c, d);\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 15,
+                "char_start": 360,
+                "char_end": 418,
+                "line": "\tsnprintf(addr, sizeof(addr), \"%d.%d.%d.%d\", a, b, c, d);\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 362,
+                "char_end": 363,
+                "chars": "n"
+            },
+            {
+                "char_start": 374,
+                "char_end": 388,
+                "chars": ", sizeof(addr)"
+            }
+        ]
+    },
+    "commit_link": "github.com/troglobit/uftpd/commit/0fb2c031ce0ace07cc19cd2cb2143c4b5a63c9dd",
+    "file_name": "src/ftpcmd.c",
+    "vul_type": "cwe-787"
+}

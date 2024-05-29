@@ -1,0 +1,191 @@
+{
+    "func_name": "track_header",
+    "func_src_before": "static int track_header(VividasDemuxContext *viv, AVFormatContext *s,  uint8_t *buf, int size)\n{\n    int i, j, ret;\n    int64_t off;\n    int val_1;\n    int num_video;\n    AVIOContext pb0, *pb = &pb0;\n\n    ffio_init_context(pb, buf, size, 0, NULL, NULL, NULL, NULL);\n\n    ffio_read_varlen(pb); // track_header_len\n    avio_r8(pb); // '1'\n\n    val_1 = ffio_read_varlen(pb);\n\n    for (i=0;i<val_1;i++) {\n        int c = avio_r8(pb);\n        if (avio_feof(pb))\n            return AVERROR_EOF;\n        for (j=0;j<c;j++) {\n            if (avio_feof(pb))\n                return AVERROR_EOF;\n            avio_r8(pb); // val_3\n            avio_r8(pb); // val_4\n        }\n    }\n\n    avio_r8(pb); // num_streams\n\n    off = avio_tell(pb);\n    off += ffio_read_varlen(pb); // val_5\n\n    avio_r8(pb); // '2'\n    num_video = avio_r8(pb);\n\n    avio_seek(pb, off, SEEK_SET);\n    if (num_video != 1) {\n        av_log(s, AV_LOG_ERROR, \"number of video tracks %d is not 1\\n\", num_video);\n        return AVERROR_PATCHWELCOME;\n    }\n\n    for (i = 0; i < num_video; i++) {\n        AVStream *st = avformat_new_stream(s, NULL);\n        int num, den;\n\n        if (!st)\n            return AVERROR(ENOMEM);\n\n        st->id = i;\n\n        st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;\n        st->codecpar->codec_id = AV_CODEC_ID_VP6;\n\n        off = avio_tell(pb);\n        off += ffio_read_varlen(pb);\n        avio_r8(pb); // '3'\n        avio_r8(pb); // val_7\n        num = avio_rl32(pb); // frame_time\n        den = avio_rl32(pb); // time_base\n        avpriv_set_pts_info(st, 64, num, den);\n        st->nb_frames = avio_rl32(pb); // n frames\n        st->codecpar->width = avio_rl16(pb); // width\n        st->codecpar->height = avio_rl16(pb); // height\n        avio_r8(pb); // val_8\n        avio_rl32(pb); // val_9\n\n        avio_seek(pb, off, SEEK_SET);\n    }\n\n    off = avio_tell(pb);\n    off += ffio_read_varlen(pb); // val_10\n    avio_r8(pb); // '4'\n    viv->num_audio = avio_r8(pb);\n    avio_seek(pb, off, SEEK_SET);\n\n    if (viv->num_audio != 1)\n        av_log(s, AV_LOG_WARNING, \"number of audio tracks %d is not 1\\n\", viv->num_audio);\n\n    for(i=0;i<viv->num_audio;i++) {\n        int q;\n        AVStream *st = avformat_new_stream(s, NULL);\n        if (!st)\n            return AVERROR(ENOMEM);\n\n        st->id = num_video + i;\n\n        st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;\n        st->codecpar->codec_id = AV_CODEC_ID_VORBIS;\n\n        off = avio_tell(pb);\n        off += ffio_read_varlen(pb); // length\n        avio_r8(pb); // '5'\n        avio_r8(pb); //codec_id\n        avio_rl16(pb); //codec_subid\n        st->codecpar->channels = avio_rl16(pb); // channels\n        st->codecpar->sample_rate = avio_rl32(pb); // sample_rate\n        avio_seek(pb, 10, SEEK_CUR); // data_1\n        q = avio_r8(pb);\n        avio_seek(pb, q, SEEK_CUR); // data_2\n        avio_r8(pb); // zeropad\n\n        if (avio_tell(pb) < off) {\n            int num_data;\n            int xd_size = 0;\n            int data_len[256];\n            int offset = 1;\n            uint8_t *p;\n            ffio_read_varlen(pb); // val_13\n            avio_r8(pb); // '19'\n            ffio_read_varlen(pb); // len_3\n            num_data = avio_r8(pb);\n            for (j = 0; j < num_data; j++) {\n                uint64_t len = ffio_read_varlen(pb);\n                if (len > INT_MAX/2 - xd_size) {\n                    return AVERROR_INVALIDDATA;\n                }\n                data_len[j] = len;\n                xd_size += len;\n            }\n\n            ret = ff_alloc_extradata(st->codecpar, 64 + xd_size + xd_size / 255);\n            if (ret < 0)\n                return ret;\n\n            p = st->codecpar->extradata;\n            p[0] = 2;\n\n            for (j = 0; j < num_data - 1; j++) {\n                unsigned delta = av_xiphlacing(&p[offset], data_len[j]);\n                if (delta > data_len[j]) {\n                    return AVERROR_INVALIDDATA;\n                }\n                offset += delta;\n            }\n\n            for (j = 0; j < num_data; j++) {\n                int ret = avio_read(pb, &p[offset], data_len[j]);\n                if (ret < data_len[j]) {\n                    st->codecpar->extradata_size = 0;\n                    av_freep(&st->codecpar->extradata);\n                    break;\n                }\n                offset += data_len[j];\n            }\n\n            if (offset < st->codecpar->extradata_size)\n                st->codecpar->extradata_size = offset;\n        }\n    }\n\n    return 0;\n}",
+    "func_src_after": "static int track_header(VividasDemuxContext *viv, AVFormatContext *s,  uint8_t *buf, int size)\n{\n    int i, j, ret;\n    int64_t off;\n    int val_1;\n    int num_video;\n    AVIOContext pb0, *pb = &pb0;\n\n    ffio_init_context(pb, buf, size, 0, NULL, NULL, NULL, NULL);\n\n    ffio_read_varlen(pb); // track_header_len\n    avio_r8(pb); // '1'\n\n    val_1 = ffio_read_varlen(pb);\n\n    for (i=0;i<val_1;i++) {\n        int c = avio_r8(pb);\n        if (avio_feof(pb))\n            return AVERROR_EOF;\n        for (j=0;j<c;j++) {\n            if (avio_feof(pb))\n                return AVERROR_EOF;\n            avio_r8(pb); // val_3\n            avio_r8(pb); // val_4\n        }\n    }\n\n    avio_r8(pb); // num_streams\n\n    off = avio_tell(pb);\n    off += ffio_read_varlen(pb); // val_5\n\n    avio_r8(pb); // '2'\n    num_video = avio_r8(pb);\n\n    avio_seek(pb, off, SEEK_SET);\n    if (num_video != 1) {\n        av_log(s, AV_LOG_ERROR, \"number of video tracks %d is not 1\\n\", num_video);\n        return AVERROR_PATCHWELCOME;\n    }\n\n    for (i = 0; i < num_video; i++) {\n        AVStream *st = avformat_new_stream(s, NULL);\n        int num, den;\n\n        if (!st)\n            return AVERROR(ENOMEM);\n\n        st->id = i;\n\n        st->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;\n        st->codecpar->codec_id = AV_CODEC_ID_VP6;\n\n        off = avio_tell(pb);\n        off += ffio_read_varlen(pb);\n        avio_r8(pb); // '3'\n        avio_r8(pb); // val_7\n        num = avio_rl32(pb); // frame_time\n        den = avio_rl32(pb); // time_base\n        avpriv_set_pts_info(st, 64, num, den);\n        st->nb_frames = avio_rl32(pb); // n frames\n        st->codecpar->width = avio_rl16(pb); // width\n        st->codecpar->height = avio_rl16(pb); // height\n        avio_r8(pb); // val_8\n        avio_rl32(pb); // val_9\n\n        avio_seek(pb, off, SEEK_SET);\n    }\n\n    off = avio_tell(pb);\n    off += ffio_read_varlen(pb); // val_10\n    avio_r8(pb); // '4'\n    viv->num_audio = avio_r8(pb);\n    avio_seek(pb, off, SEEK_SET);\n\n    if (viv->num_audio != 1)\n        av_log(s, AV_LOG_WARNING, \"number of audio tracks %d is not 1\\n\", viv->num_audio);\n\n    for(i=0;i<viv->num_audio;i++) {\n        int q;\n        AVStream *st = avformat_new_stream(s, NULL);\n        if (!st)\n            return AVERROR(ENOMEM);\n\n        st->id = num_video + i;\n\n        st->codecpar->codec_type = AVMEDIA_TYPE_AUDIO;\n        st->codecpar->codec_id = AV_CODEC_ID_VORBIS;\n\n        off = avio_tell(pb);\n        off += ffio_read_varlen(pb); // length\n        avio_r8(pb); // '5'\n        avio_r8(pb); //codec_id\n        avio_rl16(pb); //codec_subid\n        st->codecpar->channels = avio_rl16(pb); // channels\n        st->codecpar->sample_rate = avio_rl32(pb); // sample_rate\n        avio_seek(pb, 10, SEEK_CUR); // data_1\n        q = avio_r8(pb);\n        avio_seek(pb, q, SEEK_CUR); // data_2\n        avio_r8(pb); // zeropad\n\n        if (avio_tell(pb) < off) {\n            int num_data;\n            int xd_size = 1;\n            int data_len[256];\n            int offset = 1;\n            uint8_t *p;\n            ffio_read_varlen(pb); // val_13\n            avio_r8(pb); // '19'\n            ffio_read_varlen(pb); // len_3\n            num_data = avio_r8(pb);\n            for (j = 0; j < num_data; j++) {\n                uint64_t len = ffio_read_varlen(pb);\n                if (len > INT_MAX/2 - xd_size) {\n                    return AVERROR_INVALIDDATA;\n                }\n                data_len[j] = len;\n                xd_size += len + 1 + len/255;\n            }\n\n            ret = ff_alloc_extradata(st->codecpar, xd_size);\n            if (ret < 0)\n                return ret;\n\n            p = st->codecpar->extradata;\n            p[0] = 2;\n\n            for (j = 0; j < num_data - 1; j++) {\n                unsigned delta = av_xiphlacing(&p[offset], data_len[j]);\n                av_assert0(delta <= xd_size - offset);\n                offset += delta;\n            }\n\n            for (j = 0; j < num_data; j++) {\n                int ret = avio_read(pb, &p[offset], data_len[j]);\n                if (ret < data_len[j]) {\n                    st->codecpar->extradata_size = 0;\n                    av_freep(&st->codecpar->extradata);\n                    break;\n                }\n                av_assert0(data_len[j] <= xd_size - offset);\n                offset += data_len[j];\n            }\n\n            if (offset < st->codecpar->extradata_size)\n                st->codecpar->extradata_size = offset;\n        }\n    }\n\n    return 0;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 104,
+                "char_start": 2925,
+                "char_end": 2954,
+                "line": "            int xd_size = 0;\n"
+            },
+            {
+                "line_no": 118,
+                "char_start": 3441,
+                "char_end": 3473,
+                "line": "                xd_size += len;\n"
+            },
+            {
+                "line_no": 121,
+                "char_start": 3488,
+                "char_end": 3570,
+                "line": "            ret = ff_alloc_extradata(st->codecpar, 64 + xd_size + xd_size / 255);\n"
+            },
+            {
+                "line_no": 130,
+                "char_start": 3810,
+                "char_end": 3853,
+                "line": "                if (delta > data_len[j]) {\n"
+            },
+            {
+                "line_no": 131,
+                "char_start": 3853,
+                "char_end": 3901,
+                "line": "                    return AVERROR_INVALIDDATA;\n"
+            },
+            {
+                "line_no": 132,
+                "char_start": 3901,
+                "char_end": 3919,
+                "line": "                }\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 104,
+                "char_start": 2925,
+                "char_end": 2954,
+                "line": "            int xd_size = 1;\n"
+            },
+            {
+                "line_no": 118,
+                "char_start": 3441,
+                "char_end": 3487,
+                "line": "                xd_size += len + 1 + len/255;\n"
+            },
+            {
+                "line_no": 121,
+                "char_start": 3502,
+                "char_end": 3563,
+                "line": "            ret = ff_alloc_extradata(st->codecpar, xd_size);\n"
+            },
+            {
+                "line_no": 130,
+                "char_start": 3803,
+                "char_end": 3858,
+                "line": "                av_assert0(delta <= xd_size - offset);\n"
+            },
+            {
+                "line_no": 141,
+                "char_start": 4213,
+                "char_end": 4274,
+                "line": "                av_assert0(data_len[j] <= xd_size - offset);\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 2951,
+                "char_end": 2952,
+                "chars": "0"
+            },
+            {
+                "char_start": 3539,
+                "char_end": 3544,
+                "chars": "64 + "
+            },
+            {
+                "char_start": 3551,
+                "char_end": 3567,
+                "chars": " + xd_size / 255"
+            },
+            {
+                "char_start": 3826,
+                "char_end": 3829,
+                "chars": "if "
+            },
+            {
+                "char_start": 3836,
+                "char_end": 3837,
+                "chars": ">"
+            },
+            {
+                "char_start": 3839,
+                "char_end": 3842,
+                "chars": "ata"
+            },
+            {
+                "char_start": 3843,
+                "char_end": 3844,
+                "chars": "l"
+            },
+            {
+                "char_start": 3845,
+                "char_end": 3870,
+                "chars": "n[j]) {\n                 "
+            },
+            {
+                "char_start": 3872,
+                "char_end": 3874,
+                "chars": " r"
+            },
+            {
+                "char_start": 3876,
+                "char_end": 3899,
+                "chars": "urn AVERROR_INVALIDDATA"
+            },
+            {
+                "char_start": 3900,
+                "char_end": 3918,
+                "chars": "\n                }"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 2951,
+                "char_end": 2952,
+                "chars": "1"
+            },
+            {
+                "char_start": 3471,
+                "char_end": 3485,
+                "chars": " + 1 + len/255"
+            },
+            {
+                "char_start": 3819,
+                "char_end": 3829,
+                "chars": "av_assert0"
+            },
+            {
+                "char_start": 3836,
+                "char_end": 3838,
+                "chars": "<="
+            },
+            {
+                "char_start": 3839,
+                "char_end": 3840,
+                "chars": "x"
+            },
+            {
+                "char_start": 3842,
+                "char_end": 3845,
+                "chars": "siz"
+            },
+            {
+                "char_start": 3847,
+                "char_end": 3848,
+                "chars": "-"
+            },
+            {
+                "char_start": 3849,
+                "char_end": 3853,
+                "chars": "offs"
+            },
+            {
+                "char_start": 3855,
+                "char_end": 3856,
+                "chars": ")"
+            },
+            {
+                "char_start": 4212,
+                "char_end": 4273,
+                "chars": "\n                av_assert0(data_len[j] <= xd_size - offset);"
+            }
+        ]
+    },
+    "commit_link": "github.com/FFmpeg/FFmpeg/commit/27a99e2c7d450fef15594671eef4465c8a166bd7",
+    "file_name": "libavformat/vividas.c",
+    "vul_type": "cwe-787"
+}

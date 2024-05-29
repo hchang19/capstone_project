@@ -1,0 +1,53 @@
+{
+    "func_name": "ContentLine_Analyzer::DoDeliverOnce",
+    "func_src_before": "int ContentLine_Analyzer::DoDeliverOnce(int len, const u_char* data)\n\t{\n\tconst u_char* data_start = data;\n\n\tif ( len <= 0 )\n\t\treturn 0;\n\n\tfor ( ; len > 0; --len, ++data )\n\t\t{\n\t\tif ( offset >= buf_len )\n\t\t\tInitBuffer(buf_len * 2);\n\n\t\tint c = data[0];\n\n#define EMIT_LINE \\\n\t{ \\\n\tbuf[offset] = '\\0'; \\\n\tint seq_len = data + 1 - data_start; \\\n\tseq_delivered_in_lines = seq + seq_len; \\\n\tlast_char = c; \\\n\tForwardStream(offset, buf, IsOrig()); \\\n\toffset = 0; \\\n\treturn seq_len; \\\n\t}\n\n\t\tswitch ( c ) {\n\t\tcase '\\r':\n\t\t\t// Look ahead for '\\n'.\n\t\t\tif ( len > 1 && data[1] == '\\n' )\n\t\t\t\t{\n\t\t\t\t--len; ++data;\n\t\t\t\tlast_char = c;\n\t\t\t\tc = data[0];\n\t\t\t\tEMIT_LINE\n\t\t\t\t}\n\n\t\t\telse if ( CR_LF_as_EOL & CR_as_EOL )\n\t\t\t\tEMIT_LINE\n\n\t\t\telse\n\t\t\t\tbuf[offset++] = c;\n\t\t\tbreak;\n\n\t\tcase '\\n':\n\t\t\tif ( last_char == '\\r' )\n\t\t\t\t{\n\t\t\t\t--offset; // remove '\\r'\n\t\t\t\tEMIT_LINE\n\t\t\t\t}\n\n\t\t\telse if ( CR_LF_as_EOL & LF_as_EOL )\n\t\t\t\tEMIT_LINE\n\n\t\t\telse\n\t\t\t\t{\n\t\t\t\tif ( ! suppress_weirds && Conn()->FlagEvent(SINGULAR_LF) )\n\t\t\t\t\tConn()->Weird(\"line_terminated_with_single_LF\");\n\t\t\t\tbuf[offset++] = c;\n\t\t\t\t}\n\t\t\tbreak;\n\n\t\tcase '\\0':\n\t\t\tif ( flag_NULs )\n\t\t\t\tCheckNUL();\n\t\t\telse\n\t\t\t\tbuf[offset++] = c;\n\t\t\tbreak;\n\n\t\tdefault:\n\t\t\tbuf[offset++] = c;\n\t\t\tbreak;\n\t\t}\n\n\t\tif ( last_char == '\\r' )\n\t\t\tif ( ! suppress_weirds && Conn()->FlagEvent(SINGULAR_CR) )\n\t\t\t\tConn()->Weird(\"line_terminated_with_single_CR\");\n\n\t\tlast_char = c;\n\t\t}\n\n\treturn data - data_start;\n\t}",
+    "func_src_after": "int ContentLine_Analyzer::DoDeliverOnce(int len, const u_char* data)\n\t{\n\tconst u_char* data_start = data;\n\n\tif ( len <= 0 )\n\t\treturn 0;\n\n\tfor ( ; len > 0; --len, ++data )\n\t\t{\n\t\tif ( offset >= buf_len )\n\t\t\tInitBuffer(buf_len * 2);\n\n\t\tint c = data[0];\n\n#define EMIT_LINE \\\n\t{ \\\n\tbuf[offset] = '\\0'; \\\n\tint seq_len = data + 1 - data_start; \\\n\tseq_delivered_in_lines = seq + seq_len; \\\n\tlast_char = c; \\\n\tForwardStream(offset, buf, IsOrig()); \\\n\toffset = 0; \\\n\treturn seq_len; \\\n\t}\n\n\t\tswitch ( c ) {\n\t\tcase '\\r':\n\t\t\t// Look ahead for '\\n'.\n\t\t\tif ( len > 1 && data[1] == '\\n' )\n\t\t\t\t{\n\t\t\t\t--len; ++data;\n\t\t\t\tlast_char = c;\n\t\t\t\tc = data[0];\n\t\t\t\tEMIT_LINE\n\t\t\t\t}\n\n\t\t\telse if ( CR_LF_as_EOL & CR_as_EOL )\n\t\t\t\tEMIT_LINE\n\n\t\t\telse\n\t\t\t\tbuf[offset++] = c;\n\t\t\tbreak;\n\n\t\tcase '\\n':\n\t\t\tif ( last_char == '\\r' )\n\t\t\t\t{\n\t\t\t\t// Weird corner-case:\n\t\t\t\t// this can happen if we see a \\r at the end of a packet where crlf is\n\t\t\t\t// set to CR_as_EOL | LF_as_EOL, with the packet causing crlf to be set to\n\t\t\t\t// 0 and the next packet beginning with a \\n. In this case we just swallow\n\t\t\t\t// the character and re-set last_char.\n\t\t\t\tif ( offset == 0 )\n\t\t\t\t\t{\n\t\t\t\t\tlast_char = c;\n\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t--offset; // remove '\\r'\n\t\t\t\tEMIT_LINE\n\t\t\t\t}\n\n\t\t\telse if ( CR_LF_as_EOL & LF_as_EOL )\n\t\t\t\tEMIT_LINE\n\n\t\t\telse\n\t\t\t\t{\n\t\t\t\tif ( ! suppress_weirds && Conn()->FlagEvent(SINGULAR_LF) )\n\t\t\t\t\tConn()->Weird(\"line_terminated_with_single_LF\");\n\t\t\t\tbuf[offset++] = c;\n\t\t\t\t}\n\t\t\tbreak;\n\n\t\tcase '\\0':\n\t\t\tif ( flag_NULs )\n\t\t\t\tCheckNUL();\n\t\t\telse\n\t\t\t\tbuf[offset++] = c;\n\t\t\tbreak;\n\n\t\tdefault:\n\t\t\tbuf[offset++] = c;\n\t\t\tbreak;\n\t\t}\n\n\t\tif ( last_char == '\\r' )\n\t\t\tif ( ! suppress_weirds && Conn()->FlagEvent(SINGULAR_CR) )\n\t\t\t\tConn()->Weird(\"line_terminated_with_single_CR\");\n\n\t\tlast_char = c;\n\t\t}\n\n\treturn data - data_start;\n\t}",
+    "line_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "line_no": 52,
+                "char_start": 1101,
+                "char_end": 1124,
+                "line": "\t\t\t\tif ( offset == 0 )\n"
+            },
+            {
+                "line_no": 53,
+                "char_start": 1124,
+                "char_end": 1131,
+                "line": "\t\t\t\t\t{\n"
+            },
+            {
+                "line_no": 54,
+                "char_start": 1131,
+                "char_end": 1151,
+                "line": "\t\t\t\t\tlast_char = c;\n"
+            },
+            {
+                "line_no": 55,
+                "char_start": 1151,
+                "char_end": 1163,
+                "line": "\t\t\t\t\tbreak;\n"
+            },
+            {
+                "line_no": 56,
+                "char_start": 1163,
+                "char_end": 1170,
+                "line": "\t\t\t\t\t}\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 803,
+                "char_end": 1174,
+                "chars": "// Weird corner-case:\n\t\t\t\t// this can happen if we see a \\r at the end of a packet where crlf is\n\t\t\t\t// set to CR_as_EOL | LF_as_EOL, with the packet causing crlf to be set to\n\t\t\t\t// 0 and the next packet beginning with a \\n. In this case we just swallow\n\t\t\t\t// the character and re-set last_char.\n\t\t\t\tif ( offset == 0 )\n\t\t\t\t\t{\n\t\t\t\t\tlast_char = c;\n\t\t\t\t\tbreak;\n\t\t\t\t\t}\n\t\t\t\t"
+            }
+        ]
+    },
+    "commit_link": "github.com/bro/bro/commit/6c0f101a62489b1c5927b4ed63b0e1d37db40282",
+    "file_name": "src/analyzer/protocol/tcp/ContentLine.cc",
+    "vul_type": "cwe-787"
+}

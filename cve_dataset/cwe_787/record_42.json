@@ -1,0 +1,53 @@
+{
+    "func_name": "PHP_FUNCTION",
+    "func_src_before": "PHP_FUNCTION(imagegammacorrect)\n{\n\tzval *IM;\n\tgdImagePtr im;\n\tint i;\n\tdouble input, output;\n\n\tif (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, \"rdd\", &IM, &input, &output) == FAILURE) {\n\t\treturn;\n\t}\n\n\tZEND_FETCH_RESOURCE(im, gdImagePtr, &IM, -1, \"Image\", le_gd);\n\n\tif (gdImageTrueColor(im))\t{\n\t\tint x, y, c;\n\n\t\tfor (y = 0; y < gdImageSY(im); y++)\t{\n\t\t\tfor (x = 0; x < gdImageSX(im); x++)\t{\n\t\t\t\tc = gdImageGetPixel(im, x, y);\n\t\t\t\tgdImageSetPixel(im, x, y,\n\t\t\t\t\tgdTrueColorAlpha(\n\t\t\t\t\t\t(int) ((pow((pow((gdTrueColorGetRed(c)   / 255.0), input)), 1.0 / output) * 255) + .5),\n\t\t\t\t\t\t(int) ((pow((pow((gdTrueColorGetGreen(c) / 255.0), input)), 1.0 / output) * 255) + .5),\n\t\t\t\t\t\t(int) ((pow((pow((gdTrueColorGetBlue(c)  / 255.0), input)), 1.0 / output) * 255) + .5),\n\t\t\t\t\t\tgdTrueColorGetAlpha(c)\n\t\t\t\t\t)\n\t\t\t\t);\n\t\t\t}\n\t\t}\n\t\tRETURN_TRUE;\n\t}\n\n\tfor (i = 0; i < gdImageColorsTotal(im); i++) {\n\t\tim->red[i]   = (int)((pow((pow((im->red[i]   / 255.0), input)), 1.0 / output) * 255) + .5);\n\t\tim->green[i] = (int)((pow((pow((im->green[i] / 255.0), input)), 1.0 / output) * 255) + .5);\n\t\tim->blue[i]  = (int)((pow((pow((im->blue[i]  / 255.0), input)), 1.0 / output) * 255) + .5);\n\t}\n\n\tRETURN_TRUE;\n}",
+    "func_src_after": "PHP_FUNCTION(imagegammacorrect)\n{\n\tzval *IM;\n\tgdImagePtr im;\n\tint i;\n\tdouble input, output;\n\n\tif (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, \"rdd\", &IM, &input, &output) == FAILURE) {\n\t\treturn;\n\t}\n\n\tif ( input <= 0.0 || output <= 0.0 ) {\n\t\tphp_error_docref(NULL TSRMLS_CC, E_WARNING, \"Gamma values should be positive\");\n\t\tRETURN_FALSE;\n\t}\n\n\tZEND_FETCH_RESOURCE(im, gdImagePtr, &IM, -1, \"Image\", le_gd);\n\n\tif (gdImageTrueColor(im))\t{\n\t\tint x, y, c;\n\n\t\tfor (y = 0; y < gdImageSY(im); y++)\t{\n\t\t\tfor (x = 0; x < gdImageSX(im); x++)\t{\n\t\t\t\tc = gdImageGetPixel(im, x, y);\n\t\t\t\tgdImageSetPixel(im, x, y,\n\t\t\t\t\tgdTrueColorAlpha(\n\t\t\t\t\t\t(int) ((pow((pow((gdTrueColorGetRed(c)   / 255.0), input)), 1.0 / output) * 255) + .5),\n\t\t\t\t\t\t(int) ((pow((pow((gdTrueColorGetGreen(c) / 255.0), input)), 1.0 / output) * 255) + .5),\n\t\t\t\t\t\t(int) ((pow((pow((gdTrueColorGetBlue(c)  / 255.0), input)), 1.0 / output) * 255) + .5),\n\t\t\t\t\t\tgdTrueColorGetAlpha(c)\n\t\t\t\t\t)\n\t\t\t\t);\n\t\t\t}\n\t\t}\n\t\tRETURN_TRUE;\n\t}\n\n\tfor (i = 0; i < gdImageColorsTotal(im); i++) {\n\t\tim->red[i]   = (int)((pow((pow((im->red[i]   / 255.0), input)), 1.0 / output) * 255) + .5);\n\t\tim->green[i] = (int)((pow((pow((im->green[i] / 255.0), input)), 1.0 / output) * 255) + .5);\n\t\tim->blue[i]  = (int)((pow((pow((im->blue[i]  / 255.0), input)), 1.0 / output) * 255) + .5);\n\t}\n\n\tRETURN_TRUE;\n}",
+    "line_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "line_no": 12,
+                "char_start": 204,
+                "char_end": 244,
+                "line": "\tif ( input <= 0.0 || output <= 0.0 ) {\n"
+            },
+            {
+                "line_no": 13,
+                "char_start": 244,
+                "char_end": 326,
+                "line": "\t\tphp_error_docref(NULL TSRMLS_CC, E_WARNING, \"Gamma values should be positive\");\n"
+            },
+            {
+                "line_no": 14,
+                "char_start": 326,
+                "char_end": 342,
+                "line": "\t\tRETURN_FALSE;\n"
+            },
+            {
+                "line_no": 15,
+                "char_start": 342,
+                "char_end": 345,
+                "line": "\t}\n"
+            },
+            {
+                "line_no": 16,
+                "char_start": 345,
+                "char_end": 346,
+                "line": "\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 205,
+                "char_end": 347,
+                "chars": "if ( input <= 0.0 || output <= 0.0 ) {\n\t\tphp_error_docref(NULL TSRMLS_CC, E_WARNING, \"Gamma values should be positive\");\n\t\tRETURN_FALSE;\n\t}\n\n\t"
+            }
+        ]
+    },
+    "commit_link": "github.com/php/php-src/commit/1bd103df00f49cf4d4ade2cfe3f456ac058a4eae",
+    "file_name": "ext/gd/gd.c",
+    "vul_type": "cwe-787"
+}

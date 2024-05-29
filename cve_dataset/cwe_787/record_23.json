@@ -1,0 +1,84 @@
+{
+    "func_name": "patch",
+    "func_src_before": "static PyObject* patch(PyObject* self, PyObject* args)\n{\n    char *origData, *newData, *diffBlock, *extraBlock, *diffPtr, *extraPtr;\n    Py_ssize_t origDataLength, newDataLength, diffBlockLength, extraBlockLength;\n    PyObject *controlTuples, *tuple, *results;\n    off_t oldpos, newpos, x, y, z;\n    int i, j, numTuples;\n\n    if (!PyArg_ParseTuple(args, \"s#nO!s#s#\",\n                          &origData, &origDataLength, &newDataLength,\n                          &PyList_Type, &controlTuples,\n                          &diffBlock, &diffBlockLength,\n                          &extraBlock, &extraBlockLength))\n        return NULL;\n\n    /* allocate the memory for the new data */\n    newData = PyMem_Malloc(newDataLength + 1);\n    if (!newData)\n        return PyErr_NoMemory();\n\n    oldpos = 0;\n    newpos = 0;\n    diffPtr = diffBlock;\n    extraPtr = extraBlock;\n    numTuples = PyList_GET_SIZE(controlTuples);\n    for (i = 0; i < numTuples; i++) {\n        tuple = PyList_GET_ITEM(controlTuples, i);\n        if (!PyTuple_Check(tuple)) {\n            PyMem_Free(newData);\n            PyErr_SetString(PyExc_TypeError, \"expecting tuple\");\n            return NULL;\n        }\n        if (PyTuple_GET_SIZE(tuple) != 3) {\n            PyMem_Free(newData);\n            PyErr_SetString(PyExc_TypeError, \"expecting tuple of size 3\");\n            return NULL;\n        }\n        x = PyLong_AsLong(PyTuple_GET_ITEM(tuple, 0));\n        y = PyLong_AsLong(PyTuple_GET_ITEM(tuple, 1));\n        z = PyLong_AsLong(PyTuple_GET_ITEM(tuple, 2));\n        if (newpos + x > newDataLength ||\n                diffPtr + x > diffBlock + diffBlockLength ||\n                extraPtr + y > extraBlock + extraBlockLength) {\n            PyMem_Free(newData);\n            PyErr_SetString(PyExc_ValueError, \"corrupt patch (overflow)\");\n            return NULL;\n        }\n        memcpy(newData + newpos, diffPtr, x);\n        diffPtr += x;\n        for (j = 0; j < x; j++)\n            if ((oldpos + j >= 0) && (oldpos + j < origDataLength))\n                newData[newpos + j] += origData[oldpos + j];\n        newpos += x;\n        oldpos += x;\n        memcpy(newData + newpos, extraPtr, y);\n        extraPtr += y;\n        newpos += y;\n        oldpos += z;\n    }\n\n    /* confirm that a valid patch was applied */\n    if (newpos != newDataLength ||\n            diffPtr != diffBlock + diffBlockLength ||\n            extraPtr != extraBlock + extraBlockLength) {\n        PyMem_Free(newData);\n        PyErr_SetString(PyExc_ValueError, \"corrupt patch (underflow)\");\n        return NULL;\n    }\n\n    results = PyBytes_FromStringAndSize(newData, newDataLength);\n    PyMem_Free(newData);\n    return results;\n}",
+    "func_src_after": "static PyObject* patch(PyObject* self, PyObject* args)\n{\n    char *origData, *newData, *diffBlock, *extraBlock, *diffPtr, *extraPtr;\n    Py_ssize_t origDataLength, newDataLength, diffBlockLength, extraBlockLength;\n    PyObject *controlTuples, *tuple, *results;\n    off_t oldpos, newpos, x, y, z;\n    int i, j, numTuples;\n\n    if (!PyArg_ParseTuple(args, \"s#nO!s#s#\",\n                          &origData, &origDataLength, &newDataLength,\n                          &PyList_Type, &controlTuples,\n                          &diffBlock, &diffBlockLength,\n                          &extraBlock, &extraBlockLength))\n        return NULL;\n\n    /* allocate the memory for the new data */\n    newData = PyMem_Malloc(newDataLength + 1);\n    if (!newData)\n        return PyErr_NoMemory();\n\n    oldpos = 0;\n    newpos = 0;\n    diffPtr = diffBlock;\n    extraPtr = extraBlock;\n    numTuples = PyList_GET_SIZE(controlTuples);\n    for (i = 0; i < numTuples; i++) {\n        tuple = PyList_GET_ITEM(controlTuples, i);\n        if (!PyTuple_Check(tuple)) {\n            PyMem_Free(newData);\n            PyErr_SetString(PyExc_TypeError, \"expecting tuple\");\n            return NULL;\n        }\n        if (PyTuple_GET_SIZE(tuple) != 3) {\n            PyMem_Free(newData);\n            PyErr_SetString(PyExc_TypeError, \"expecting tuple of size 3\");\n            return NULL;\n        }\n        x = PyLong_AsLong(PyTuple_GET_ITEM(tuple, 0));\n        y = PyLong_AsLong(PyTuple_GET_ITEM(tuple, 1));\n        z = PyLong_AsLong(PyTuple_GET_ITEM(tuple, 2));\n        if (newpos + x > newDataLength ||\n                diffPtr + x > diffBlock + diffBlockLength) {\n            PyMem_Free(newData);\n            PyErr_SetString(PyExc_ValueError, \"corrupt patch (overflow)\");\n            return NULL;\n        }\n        memcpy(newData + newpos, diffPtr, x);\n        diffPtr += x;\n        for (j = 0; j < x; j++)\n            if ((oldpos + j >= 0) && (oldpos + j < origDataLength))\n                newData[newpos + j] += origData[oldpos + j];\n        newpos += x;\n        oldpos += x;\n        if (newpos + y > newDataLength ||\n                extraPtr + y > extraBlock + extraBlockLength) {\n            PyMem_Free(newData);\n            PyErr_SetString(PyExc_ValueError, \"corrupt patch (overflow)\");\n            return NULL;\n        }\n        memcpy(newData + newpos, extraPtr, y);\n        extraPtr += y;\n        newpos += y;\n        oldpos += z;\n    }\n\n    /* confirm that a valid patch was applied */\n    if (newpos != newDataLength ||\n            diffPtr != diffBlock + diffBlockLength ||\n            extraPtr != extraBlock + extraBlockLength) {\n        PyMem_Free(newData);\n        PyErr_SetString(PyExc_ValueError, \"corrupt patch (underflow)\");\n        return NULL;\n    }\n\n    results = PyBytes_FromStringAndSize(newData, newDataLength);\n    PyMem_Free(newData);\n    return results;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 42,
+                "char_start": 1561,
+                "char_end": 1622,
+                "line": "                diffPtr + x > diffBlock + diffBlockLength ||\n"
+            },
+            {
+                "line_no": 43,
+                "char_start": 1622,
+                "char_end": 1686,
+                "line": "                extraPtr + y > extraBlock + extraBlockLength) {\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 42,
+                "char_start": 1561,
+                "char_end": 1622,
+                "line": "                diffPtr + x > diffBlock + diffBlockLength) {\n"
+            },
+            {
+                "line_no": 54,
+                "char_start": 2036,
+                "char_end": 2078,
+                "line": "        if (newpos + y > newDataLength ||\n"
+            },
+            {
+                "line_no": 55,
+                "char_start": 2078,
+                "char_end": 2142,
+                "line": "                extraPtr + y > extraBlock + extraBlockLength) {\n"
+            },
+            {
+                "line_no": 56,
+                "char_start": 2142,
+                "char_end": 2175,
+                "line": "            PyMem_Free(newData);\n"
+            },
+            {
+                "line_no": 57,
+                "char_start": 2175,
+                "char_end": 2250,
+                "line": "            PyErr_SetString(PyExc_ValueError, \"corrupt patch (overflow)\");\n"
+            },
+            {
+                "line_no": 58,
+                "char_start": 2250,
+                "char_end": 2275,
+                "line": "            return NULL;\n"
+            },
+            {
+                "line_no": 59,
+                "char_start": 2275,
+                "char_end": 2285,
+                "line": "        }\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 1618,
+                "char_end": 1682,
+                "chars": " ||\n                extraPtr + y > extraBlock + extraBlockLength"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 2035,
+                "char_end": 2284,
+                "chars": "\n        if (newpos + y > newDataLength ||\n                extraPtr + y > extraBlock + extraBlockLength) {\n            PyMem_Free(newData);\n            PyErr_SetString(PyExc_ValueError, \"corrupt patch (overflow)\");\n            return NULL;\n        }"
+            }
+        ]
+    },
+    "commit_link": "github.com/ilanschnell/bsdiff4/commit/49a4cee2feef7deaf9d89e5e793a8824930284d7",
+    "file_name": "bsdiff4/core.c",
+    "vul_type": "cwe-787"
+}

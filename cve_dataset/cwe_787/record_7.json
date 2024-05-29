@@ -1,0 +1,71 @@
+{
+    "func_name": "avcodec_align_dimensions2",
+    "func_src_before": "void avcodec_align_dimensions2(AVCodecContext *s, int *width, int *height,\n                               int linesize_align[AV_NUM_DATA_POINTERS])\n{\n    int i;\n    int w_align = 1;\n    int h_align = 1;\n    AVPixFmtDescriptor const *desc = av_pix_fmt_desc_get(s->pix_fmt);\n\n    if (desc) {\n        w_align = 1 << desc->log2_chroma_w;\n        h_align = 1 << desc->log2_chroma_h;\n    }\n\n    switch (s->pix_fmt) {\n    case AV_PIX_FMT_YUV420P:\n    case AV_PIX_FMT_YUYV422:\n    case AV_PIX_FMT_YVYU422:\n    case AV_PIX_FMT_UYVY422:\n    case AV_PIX_FMT_YUV422P:\n    case AV_PIX_FMT_YUV440P:\n    case AV_PIX_FMT_YUV444P:\n    case AV_PIX_FMT_GBRP:\n    case AV_PIX_FMT_GBRAP:\n    case AV_PIX_FMT_GRAY8:\n    case AV_PIX_FMT_GRAY16BE:\n    case AV_PIX_FMT_GRAY16LE:\n    case AV_PIX_FMT_YUVJ420P:\n    case AV_PIX_FMT_YUVJ422P:\n    case AV_PIX_FMT_YUVJ440P:\n    case AV_PIX_FMT_YUVJ444P:\n    case AV_PIX_FMT_YUVA420P:\n    case AV_PIX_FMT_YUVA422P:\n    case AV_PIX_FMT_YUVA444P:\n    case AV_PIX_FMT_YUV420P9LE:\n    case AV_PIX_FMT_YUV420P9BE:\n    case AV_PIX_FMT_YUV420P10LE:\n    case AV_PIX_FMT_YUV420P10BE:\n    case AV_PIX_FMT_YUV420P12LE:\n    case AV_PIX_FMT_YUV420P12BE:\n    case AV_PIX_FMT_YUV420P14LE:\n    case AV_PIX_FMT_YUV420P14BE:\n    case AV_PIX_FMT_YUV420P16LE:\n    case AV_PIX_FMT_YUV420P16BE:\n    case AV_PIX_FMT_YUVA420P9LE:\n    case AV_PIX_FMT_YUVA420P9BE:\n    case AV_PIX_FMT_YUVA420P10LE:\n    case AV_PIX_FMT_YUVA420P10BE:\n    case AV_PIX_FMT_YUVA420P16LE:\n    case AV_PIX_FMT_YUVA420P16BE:\n    case AV_PIX_FMT_YUV422P9LE:\n    case AV_PIX_FMT_YUV422P9BE:\n    case AV_PIX_FMT_YUV422P10LE:\n    case AV_PIX_FMT_YUV422P10BE:\n    case AV_PIX_FMT_YUV422P12LE:\n    case AV_PIX_FMT_YUV422P12BE:\n    case AV_PIX_FMT_YUV422P14LE:\n    case AV_PIX_FMT_YUV422P14BE:\n    case AV_PIX_FMT_YUV422P16LE:\n    case AV_PIX_FMT_YUV422P16BE:\n    case AV_PIX_FMT_YUVA422P9LE:\n    case AV_PIX_FMT_YUVA422P9BE:\n    case AV_PIX_FMT_YUVA422P10LE:\n    case AV_PIX_FMT_YUVA422P10BE:\n    case AV_PIX_FMT_YUVA422P16LE:\n    case AV_PIX_FMT_YUVA422P16BE:\n    case AV_PIX_FMT_YUV440P10LE:\n    case AV_PIX_FMT_YUV440P10BE:\n    case AV_PIX_FMT_YUV440P12LE:\n    case AV_PIX_FMT_YUV440P12BE:\n    case AV_PIX_FMT_YUV444P9LE:\n    case AV_PIX_FMT_YUV444P9BE:\n    case AV_PIX_FMT_YUV444P10LE:\n    case AV_PIX_FMT_YUV444P10BE:\n    case AV_PIX_FMT_YUV444P12LE:\n    case AV_PIX_FMT_YUV444P12BE:\n    case AV_PIX_FMT_YUV444P14LE:\n    case AV_PIX_FMT_YUV444P14BE:\n    case AV_PIX_FMT_YUV444P16LE:\n    case AV_PIX_FMT_YUV444P16BE:\n    case AV_PIX_FMT_YUVA444P9LE:\n    case AV_PIX_FMT_YUVA444P9BE:\n    case AV_PIX_FMT_YUVA444P10LE:\n    case AV_PIX_FMT_YUVA444P10BE:\n    case AV_PIX_FMT_YUVA444P16LE:\n    case AV_PIX_FMT_YUVA444P16BE:\n    case AV_PIX_FMT_GBRP9LE:\n    case AV_PIX_FMT_GBRP9BE:\n    case AV_PIX_FMT_GBRP10LE:\n    case AV_PIX_FMT_GBRP10BE:\n    case AV_PIX_FMT_GBRP12LE:\n    case AV_PIX_FMT_GBRP12BE:\n    case AV_PIX_FMT_GBRP14LE:\n    case AV_PIX_FMT_GBRP14BE:\n    case AV_PIX_FMT_GBRP16LE:\n    case AV_PIX_FMT_GBRP16BE:\n    case AV_PIX_FMT_GBRAP12LE:\n    case AV_PIX_FMT_GBRAP12BE:\n    case AV_PIX_FMT_GBRAP16LE:\n    case AV_PIX_FMT_GBRAP16BE:\n        w_align = 16; //FIXME assume 16 pixel per macroblock\n        h_align = 16 * 2; // interlaced needs 2 macroblocks height\n        break;\n    case AV_PIX_FMT_YUV411P:\n    case AV_PIX_FMT_YUVJ411P:\n    case AV_PIX_FMT_UYYVYY411:\n        w_align = 32;\n        h_align = 16 * 2;\n        break;\n    case AV_PIX_FMT_YUV410P:\n        if (s->codec_id == AV_CODEC_ID_SVQ1) {\n            w_align = 64;\n            h_align = 64;\n        }\n        break;\n    case AV_PIX_FMT_RGB555:\n        if (s->codec_id == AV_CODEC_ID_RPZA) {\n            w_align = 4;\n            h_align = 4;\n        }\n        break;\n    case AV_PIX_FMT_PAL8:\n    case AV_PIX_FMT_BGR8:\n    case AV_PIX_FMT_RGB8:\n        if (s->codec_id == AV_CODEC_ID_SMC ||\n            s->codec_id == AV_CODEC_ID_CINEPAK) {\n            w_align = 4;\n            h_align = 4;\n        }\n        if (s->codec_id == AV_CODEC_ID_JV) {\n            w_align = 8;\n            h_align = 8;\n        }\n        break;\n    case AV_PIX_FMT_BGR24:\n        if ((s->codec_id == AV_CODEC_ID_MSZH) ||\n            (s->codec_id == AV_CODEC_ID_ZLIB)) {\n            w_align = 4;\n            h_align = 4;\n        }\n        break;\n    case AV_PIX_FMT_RGB24:\n        if (s->codec_id == AV_CODEC_ID_CINEPAK) {\n            w_align = 4;\n            h_align = 4;\n        }\n        break;\n    default:\n        break;\n    }\n\n    if (s->codec_id == AV_CODEC_ID_IFF_ILBM) {\n        w_align = FFMAX(w_align, 8);\n    }\n\n    *width  = FFALIGN(*width, w_align);\n    *height = FFALIGN(*height, h_align);\n    if (s->codec_id == AV_CODEC_ID_H264 || s->lowres) {\n        // some of the optimized chroma MC reads one line too much\n        // which is also done in mpeg decoders with lowres > 0\n        *height += 2;\n\n        // H.264 uses edge emulation for out of frame motion vectors, for this\n        // it requires a temporary area large enough to hold a 21x21 block,\n        // increasing witdth ensure that the temporary area is large enough,\n        // the next rounded up width is 32\n        *width = FFMAX(*width, 32);\n    }\n\n    for (i = 0; i < 4; i++)\n        linesize_align[i] = STRIDE_ALIGN;\n}",
+    "func_src_after": "void avcodec_align_dimensions2(AVCodecContext *s, int *width, int *height,\n                               int linesize_align[AV_NUM_DATA_POINTERS])\n{\n    int i;\n    int w_align = 1;\n    int h_align = 1;\n    AVPixFmtDescriptor const *desc = av_pix_fmt_desc_get(s->pix_fmt);\n\n    if (desc) {\n        w_align = 1 << desc->log2_chroma_w;\n        h_align = 1 << desc->log2_chroma_h;\n    }\n\n    switch (s->pix_fmt) {\n    case AV_PIX_FMT_YUV420P:\n    case AV_PIX_FMT_YUYV422:\n    case AV_PIX_FMT_YVYU422:\n    case AV_PIX_FMT_UYVY422:\n    case AV_PIX_FMT_YUV422P:\n    case AV_PIX_FMT_YUV440P:\n    case AV_PIX_FMT_YUV444P:\n    case AV_PIX_FMT_GBRP:\n    case AV_PIX_FMT_GBRAP:\n    case AV_PIX_FMT_GRAY8:\n    case AV_PIX_FMT_GRAY16BE:\n    case AV_PIX_FMT_GRAY16LE:\n    case AV_PIX_FMT_YUVJ420P:\n    case AV_PIX_FMT_YUVJ422P:\n    case AV_PIX_FMT_YUVJ440P:\n    case AV_PIX_FMT_YUVJ444P:\n    case AV_PIX_FMT_YUVA420P:\n    case AV_PIX_FMT_YUVA422P:\n    case AV_PIX_FMT_YUVA444P:\n    case AV_PIX_FMT_YUV420P9LE:\n    case AV_PIX_FMT_YUV420P9BE:\n    case AV_PIX_FMT_YUV420P10LE:\n    case AV_PIX_FMT_YUV420P10BE:\n    case AV_PIX_FMT_YUV420P12LE:\n    case AV_PIX_FMT_YUV420P12BE:\n    case AV_PIX_FMT_YUV420P14LE:\n    case AV_PIX_FMT_YUV420P14BE:\n    case AV_PIX_FMT_YUV420P16LE:\n    case AV_PIX_FMT_YUV420P16BE:\n    case AV_PIX_FMT_YUVA420P9LE:\n    case AV_PIX_FMT_YUVA420P9BE:\n    case AV_PIX_FMT_YUVA420P10LE:\n    case AV_PIX_FMT_YUVA420P10BE:\n    case AV_PIX_FMT_YUVA420P16LE:\n    case AV_PIX_FMT_YUVA420P16BE:\n    case AV_PIX_FMT_YUV422P9LE:\n    case AV_PIX_FMT_YUV422P9BE:\n    case AV_PIX_FMT_YUV422P10LE:\n    case AV_PIX_FMT_YUV422P10BE:\n    case AV_PIX_FMT_YUV422P12LE:\n    case AV_PIX_FMT_YUV422P12BE:\n    case AV_PIX_FMT_YUV422P14LE:\n    case AV_PIX_FMT_YUV422P14BE:\n    case AV_PIX_FMT_YUV422P16LE:\n    case AV_PIX_FMT_YUV422P16BE:\n    case AV_PIX_FMT_YUVA422P9LE:\n    case AV_PIX_FMT_YUVA422P9BE:\n    case AV_PIX_FMT_YUVA422P10LE:\n    case AV_PIX_FMT_YUVA422P10BE:\n    case AV_PIX_FMT_YUVA422P16LE:\n    case AV_PIX_FMT_YUVA422P16BE:\n    case AV_PIX_FMT_YUV440P10LE:\n    case AV_PIX_FMT_YUV440P10BE:\n    case AV_PIX_FMT_YUV440P12LE:\n    case AV_PIX_FMT_YUV440P12BE:\n    case AV_PIX_FMT_YUV444P9LE:\n    case AV_PIX_FMT_YUV444P9BE:\n    case AV_PIX_FMT_YUV444P10LE:\n    case AV_PIX_FMT_YUV444P10BE:\n    case AV_PIX_FMT_YUV444P12LE:\n    case AV_PIX_FMT_YUV444P12BE:\n    case AV_PIX_FMT_YUV444P14LE:\n    case AV_PIX_FMT_YUV444P14BE:\n    case AV_PIX_FMT_YUV444P16LE:\n    case AV_PIX_FMT_YUV444P16BE:\n    case AV_PIX_FMT_YUVA444P9LE:\n    case AV_PIX_FMT_YUVA444P9BE:\n    case AV_PIX_FMT_YUVA444P10LE:\n    case AV_PIX_FMT_YUVA444P10BE:\n    case AV_PIX_FMT_YUVA444P16LE:\n    case AV_PIX_FMT_YUVA444P16BE:\n    case AV_PIX_FMT_GBRP9LE:\n    case AV_PIX_FMT_GBRP9BE:\n    case AV_PIX_FMT_GBRP10LE:\n    case AV_PIX_FMT_GBRP10BE:\n    case AV_PIX_FMT_GBRP12LE:\n    case AV_PIX_FMT_GBRP12BE:\n    case AV_PIX_FMT_GBRP14LE:\n    case AV_PIX_FMT_GBRP14BE:\n    case AV_PIX_FMT_GBRP16LE:\n    case AV_PIX_FMT_GBRP16BE:\n    case AV_PIX_FMT_GBRAP12LE:\n    case AV_PIX_FMT_GBRAP12BE:\n    case AV_PIX_FMT_GBRAP16LE:\n    case AV_PIX_FMT_GBRAP16BE:\n        w_align = 16; //FIXME assume 16 pixel per macroblock\n        h_align = 16 * 2; // interlaced needs 2 macroblocks height\n        break;\n    case AV_PIX_FMT_YUV411P:\n    case AV_PIX_FMT_YUVJ411P:\n    case AV_PIX_FMT_UYYVYY411:\n        w_align = 32;\n        h_align = 16 * 2;\n        break;\n    case AV_PIX_FMT_YUV410P:\n        if (s->codec_id == AV_CODEC_ID_SVQ1) {\n            w_align = 64;\n            h_align = 64;\n        }\n        break;\n    case AV_PIX_FMT_RGB555:\n        if (s->codec_id == AV_CODEC_ID_RPZA) {\n            w_align = 4;\n            h_align = 4;\n        }\n        if (s->codec_id == AV_CODEC_ID_INTERPLAY_VIDEO) {\n            w_align = 8;\n            h_align = 8;\n        }\n        break;\n    case AV_PIX_FMT_PAL8:\n    case AV_PIX_FMT_BGR8:\n    case AV_PIX_FMT_RGB8:\n        if (s->codec_id == AV_CODEC_ID_SMC ||\n            s->codec_id == AV_CODEC_ID_CINEPAK) {\n            w_align = 4;\n            h_align = 4;\n        }\n        if (s->codec_id == AV_CODEC_ID_JV ||\n            s->codec_id == AV_CODEC_ID_INTERPLAY_VIDEO) {\n            w_align = 8;\n            h_align = 8;\n        }\n        break;\n    case AV_PIX_FMT_BGR24:\n        if ((s->codec_id == AV_CODEC_ID_MSZH) ||\n            (s->codec_id == AV_CODEC_ID_ZLIB)) {\n            w_align = 4;\n            h_align = 4;\n        }\n        break;\n    case AV_PIX_FMT_RGB24:\n        if (s->codec_id == AV_CODEC_ID_CINEPAK) {\n            w_align = 4;\n            h_align = 4;\n        }\n        break;\n    default:\n        break;\n    }\n\n    if (s->codec_id == AV_CODEC_ID_IFF_ILBM) {\n        w_align = FFMAX(w_align, 8);\n    }\n\n    *width  = FFALIGN(*width, w_align);\n    *height = FFALIGN(*height, h_align);\n    if (s->codec_id == AV_CODEC_ID_H264 || s->lowres) {\n        // some of the optimized chroma MC reads one line too much\n        // which is also done in mpeg decoders with lowres > 0\n        *height += 2;\n\n        // H.264 uses edge emulation for out of frame motion vectors, for this\n        // it requires a temporary area large enough to hold a 21x21 block,\n        // increasing witdth ensure that the temporary area is large enough,\n        // the next rounded up width is 32\n        *width = FFMAX(*width, 32);\n    }\n\n    for (i = 0; i < 4; i++)\n        linesize_align[i] = STRIDE_ALIGN;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 129,
+                "char_start": 3941,
+                "char_end": 3986,
+                "line": "        if (s->codec_id == AV_CODEC_ID_JV) {\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 120,
+                "char_start": 3692,
+                "char_end": 3750,
+                "line": "        if (s->codec_id == AV_CODEC_ID_INTERPLAY_VIDEO) {\n"
+            },
+            {
+                "line_no": 121,
+                "char_start": 3750,
+                "char_end": 3775,
+                "line": "            w_align = 8;\n"
+            },
+            {
+                "line_no": 122,
+                "char_start": 3775,
+                "char_end": 3800,
+                "line": "            h_align = 8;\n"
+            },
+            {
+                "line_no": 123,
+                "char_start": 3800,
+                "char_end": 3810,
+                "line": "        }\n"
+            },
+            {
+                "line_no": 133,
+                "char_start": 4059,
+                "char_end": 4104,
+                "line": "        if (s->codec_id == AV_CODEC_ID_JV ||\n"
+            },
+            {
+                "line_no": 134,
+                "char_start": 4104,
+                "char_end": 4162,
+                "line": "            s->codec_id == AV_CODEC_ID_INTERPLAY_VIDEO) {\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 3700,
+                "char_end": 3818,
+                "chars": "if (s->codec_id == AV_CODEC_ID_INTERPLAY_VIDEO) {\n            w_align = 8;\n            h_align = 8;\n        }\n        "
+            },
+            {
+                "char_start": 4100,
+                "char_end": 4158,
+                "chars": " ||\n            s->codec_id == AV_CODEC_ID_INTERPLAY_VIDEO"
+            }
+        ]
+    },
+    "commit_link": "github.com/FFmpeg/FFmpeg/commit/2080bc33717955a0e4268e738acf8c1eeddbf8cb",
+    "file_name": "libavcodec/utils.c",
+    "vul_type": "cwe-787"
+}

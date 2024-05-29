@@ -1,0 +1,219 @@
+{
+    "func_name": "rfbProcessFileTransferReadBuffer",
+    "func_src_before": "char *rfbProcessFileTransferReadBuffer(rfbClientPtr cl, uint32_t length)\n{\n    char *buffer=NULL;\n    int   n=0;\n\n    FILEXFER_ALLOWED_OR_CLOSE_AND_RETURN(\"\", cl, NULL);\n    /*\n    rfbLog(\"rfbProcessFileTransferReadBuffer(%dlen)\\n\", length);\n    */\n    if (length>0) {\n        buffer=malloc((uint64_t)length+1);\n        if (buffer!=NULL) {\n            if ((n = rfbReadExact(cl, (char *)buffer, length)) <= 0) {\n                if (n != 0)\n                    rfbLogPerror(\"rfbProcessFileTransferReadBuffer: read\");\n                rfbCloseClient(cl);\n                /* NOTE: don't forget to free(buffer) if you return early! */\n                if (buffer!=NULL) free(buffer);\n                return NULL;\n            }\n            /* Null Terminate */\n            buffer[length]=0;\n        }\n    }\n    return buffer;\n}",
+    "func_src_after": "char *rfbProcessFileTransferReadBuffer(rfbClientPtr cl, uint32_t length)\n{\n    char *buffer=NULL;\n    int   n=0;\n\n    FILEXFER_ALLOWED_OR_CLOSE_AND_RETURN(\"\", cl, NULL);\n\n    /*\n       We later alloc length+1, which might wrap around on 32-bit systems if length equals\n       0XFFFFFFFF, i.e. SIZE_MAX for 32-bit systems. On 64-bit systems, a length of 0XFFFFFFFF\n       will safely be allocated since this check will never trigger and malloc() can digest length+1\n       without problems as length is a uint32_t.\n    */\n    if(length == SIZE_MAX) {\n\trfbErr(\"rfbProcessFileTransferReadBuffer: too big file transfer length requested: %u\", (unsigned int)length);\n\trfbCloseClient(cl);\n\treturn NULL;\n    }\n\n    if (length>0) {\n        buffer=malloc((size_t)length+1);\n        if (buffer!=NULL) {\n            if ((n = rfbReadExact(cl, (char *)buffer, length)) <= 0) {\n                if (n != 0)\n                    rfbLogPerror(\"rfbProcessFileTransferReadBuffer: read\");\n                rfbCloseClient(cl);\n                /* NOTE: don't forget to free(buffer) if you return early! */\n                if (buffer!=NULL) free(buffer);\n                return NULL;\n            }\n            /* Null Terminate */\n            buffer[length]=0;\n        }\n    }\n    return buffer;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 8,
+                "char_start": 177,
+                "char_end": 242,
+                "line": "    rfbLog(\"rfbProcessFileTransferReadBuffer(%dlen)\\n\", length);\n"
+            },
+            {
+                "line_no": 11,
+                "char_start": 269,
+                "char_end": 312,
+                "line": "        buffer=malloc((uint64_t)length+1);\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 7,
+                "char_start": 170,
+                "char_end": 171,
+                "line": "\n"
+            },
+            {
+                "line_no": 9,
+                "char_start": 178,
+                "char_end": 269,
+                "line": "       We later alloc length+1, which might wrap around on 32-bit systems if length equals\n"
+            },
+            {
+                "line_no": 10,
+                "char_start": 269,
+                "char_end": 364,
+                "line": "       0XFFFFFFFF, i.e. SIZE_MAX for 32-bit systems. On 64-bit systems, a length of 0XFFFFFFFF\n"
+            },
+            {
+                "line_no": 11,
+                "char_start": 364,
+                "char_end": 465,
+                "line": "       will safely be allocated since this check will never trigger and malloc() can digest length+1\n"
+            },
+            {
+                "line_no": 12,
+                "char_start": 465,
+                "char_end": 514,
+                "line": "       without problems as length is a uint32_t.\n"
+            },
+            {
+                "line_no": 14,
+                "char_start": 521,
+                "char_end": 550,
+                "line": "    if(length == SIZE_MAX) {\n"
+            },
+            {
+                "line_no": 15,
+                "char_start": 550,
+                "char_end": 661,
+                "line": "\trfbErr(\"rfbProcessFileTransferReadBuffer: too big file transfer length requested: %u\", (unsigned int)length);\n"
+            },
+            {
+                "line_no": 16,
+                "char_start": 661,
+                "char_end": 682,
+                "line": "\trfbCloseClient(cl);\n"
+            },
+            {
+                "line_no": 17,
+                "char_start": 682,
+                "char_end": 696,
+                "line": "\treturn NULL;\n"
+            },
+            {
+                "line_no": 18,
+                "char_start": 696,
+                "char_end": 702,
+                "line": "    }\n"
+            },
+            {
+                "line_no": 19,
+                "char_start": 702,
+                "char_end": 703,
+                "line": "\n"
+            },
+            {
+                "line_no": 21,
+                "char_start": 723,
+                "char_end": 764,
+                "line": "        buffer=malloc((size_t)length+1);\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 184,
+                "char_end": 185,
+                "chars": "L"
+            },
+            {
+                "char_start": 221,
+                "char_end": 224,
+                "chars": "(%d"
+            },
+            {
+                "char_start": 227,
+                "char_end": 229,
+                "chars": ")\\"
+            },
+            {
+                "char_start": 246,
+                "char_end": 248,
+                "chars": "*/"
+            },
+            {
+                "char_start": 292,
+                "char_end": 293,
+                "chars": "u"
+            },
+            {
+                "char_start": 294,
+                "char_end": 298,
+                "chars": "nt64"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 170,
+                "char_end": 171,
+                "chars": "\n"
+            },
+            {
+                "char_start": 182,
+                "char_end": 192,
+                "chars": "   We late"
+            },
+            {
+                "char_start": 193,
+                "char_end": 253,
+                "chars": " alloc length+1, which might wrap around on 32-bit systems i"
+            },
+            {
+                "char_start": 254,
+                "char_end": 309,
+                "chars": " length equals\n       0XFFFFFFFF, i.e. SIZE_MAX for 32-"
+            },
+            {
+                "char_start": 310,
+                "char_end": 350,
+                "chars": "it systems. On 64-bit systems, a length "
+            },
+            {
+                "char_start": 351,
+                "char_end": 427,
+                "chars": "f 0XFFFFFFFF\n       will safely be allocated since this check will never tri"
+            },
+            {
+                "char_start": 428,
+                "char_end": 557,
+                "chars": "ger and malloc() can digest length+1\n       without problems as length is a uint32_t.\n    */\n    if(length == SIZE_MAX) {\n\trfbErr"
+            },
+            {
+                "char_start": 591,
+                "char_end": 603,
+                "chars": ": too big fi"
+            },
+            {
+                "char_start": 605,
+                "char_end": 609,
+                "chars": " tra"
+            },
+            {
+                "char_start": 610,
+                "char_end": 617,
+                "chars": "sfer le"
+            },
+            {
+                "char_start": 618,
+                "char_end": 635,
+                "chars": "gth requested: %u"
+            },
+            {
+                "char_start": 638,
+                "char_end": 652,
+                "chars": "(unsigned int)"
+            },
+            {
+                "char_start": 661,
+                "char_end": 689,
+                "chars": "\trfbCloseClient(cl);\n\treturn"
+            },
+            {
+                "char_start": 690,
+                "char_end": 696,
+                "chars": "NULL;\n"
+            },
+            {
+                "char_start": 699,
+                "char_end": 702,
+                "chars": " }\n"
+            },
+            {
+                "char_start": 746,
+                "char_end": 747,
+                "chars": "s"
+            },
+            {
+                "char_start": 748,
+                "char_end": 750,
+                "chars": "ze"
+            }
+        ]
+    },
+    "commit_link": "github.com/LibVNC/libvncserver/commit/15bb719c03cc70f14c36a843dcb16ed69b405707",
+    "file_name": "libvncserver/rfbserver.c",
+    "vul_type": "cwe-787"
+}

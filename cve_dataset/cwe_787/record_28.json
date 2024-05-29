@@ -1,0 +1,133 @@
+{
+    "func_name": "opj_j2k_set_cinema_parameters",
+    "func_src_before": "static void opj_j2k_set_cinema_parameters(opj_cparameters_t *parameters,\n        opj_image_t *image, opj_event_mgr_t *p_manager)\n{\n    /* Configure cinema parameters */\n    int i;\n\n    /* No tiling */\n    parameters->tile_size_on = OPJ_FALSE;\n    parameters->cp_tdx = 1;\n    parameters->cp_tdy = 1;\n\n    /* One tile part for each component */\n    parameters->tp_flag = 'C';\n    parameters->tp_on = 1;\n\n    /* Tile and Image shall be at (0,0) */\n    parameters->cp_tx0 = 0;\n    parameters->cp_ty0 = 0;\n    parameters->image_offset_x0 = 0;\n    parameters->image_offset_y0 = 0;\n\n    /* Codeblock size= 32*32 */\n    parameters->cblockw_init = 32;\n    parameters->cblockh_init = 32;\n\n    /* Codeblock style: no mode switch enabled */\n    parameters->mode = 0;\n\n    /* No ROI */\n    parameters->roi_compno = -1;\n\n    /* No subsampling */\n    parameters->subsampling_dx = 1;\n    parameters->subsampling_dy = 1;\n\n    /* 9-7 transform */\n    parameters->irreversible = 1;\n\n    /* Number of layers */\n    if (parameters->tcp_numlayers > 1) {\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"1 single quality layer\"\n                      \"-> Number of layers forced to 1 (rather than %d)\\n\"\n                      \"-> Rate of the last layer (%3.1f) will be used\",\n                      parameters->tcp_numlayers,\n                      parameters->tcp_rates[parameters->tcp_numlayers - 1]);\n        parameters->tcp_rates[0] = parameters->tcp_rates[parameters->tcp_numlayers - 1];\n        parameters->tcp_numlayers = 1;\n    }\n\n    /* Resolution levels */\n    switch (parameters->rsiz) {\n    case OPJ_PROFILE_CINEMA_2K:\n        if (parameters->numresolution > 6) {\n            opj_event_msg(p_manager, EVT_WARNING,\n                          \"JPEG 2000 Profile-3 (2k dc profile) requires:\\n\"\n                          \"Number of decomposition levels <= 5\\n\"\n                          \"-> Number of decomposition levels forced to 5 (rather than %d)\\n\",\n                          parameters->numresolution + 1);\n            parameters->numresolution = 6;\n        }\n        break;\n    case OPJ_PROFILE_CINEMA_4K:\n        if (parameters->numresolution < 2) {\n            opj_event_msg(p_manager, EVT_WARNING,\n                          \"JPEG 2000 Profile-4 (4k dc profile) requires:\\n\"\n                          \"Number of decomposition levels >= 1 && <= 6\\n\"\n                          \"-> Number of decomposition levels forced to 1 (rather than %d)\\n\",\n                          parameters->numresolution + 1);\n            parameters->numresolution = 1;\n        } else if (parameters->numresolution > 7) {\n            opj_event_msg(p_manager, EVT_WARNING,\n                          \"JPEG 2000 Profile-4 (4k dc profile) requires:\\n\"\n                          \"Number of decomposition levels >= 1 && <= 6\\n\"\n                          \"-> Number of decomposition levels forced to 6 (rather than %d)\\n\",\n                          parameters->numresolution + 1);\n            parameters->numresolution = 7;\n        }\n        break;\n    default :\n        break;\n    }\n\n    /* Precincts */\n    parameters->csty |= 0x01;\n    parameters->res_spec = parameters->numresolution - 1;\n    for (i = 0; i < parameters->res_spec; i++) {\n        parameters->prcw_init[i] = 256;\n        parameters->prch_init[i] = 256;\n    }\n\n    /* The progression order shall be CPRL */\n    parameters->prog_order = OPJ_CPRL;\n\n    /* Progression order changes for 4K, disallowed for 2K */\n    if (parameters->rsiz == OPJ_PROFILE_CINEMA_4K) {\n        parameters->numpocs = (OPJ_UINT32)opj_j2k_initialise_4K_poc(parameters->POC,\n                              parameters->numresolution);\n    } else {\n        parameters->numpocs = 0;\n    }\n\n    /* Limited bit-rate */\n    parameters->cp_disto_alloc = 1;\n    if (parameters->max_cs_size <= 0) {\n        /* No rate has been introduced, 24 fps is assumed */\n        parameters->max_cs_size = OPJ_CINEMA_24_CS;\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"Maximum 1302083 compressed bytes @ 24fps\\n\"\n                      \"As no rate has been given, this limit will be used.\\n\");\n    } else if (parameters->max_cs_size > OPJ_CINEMA_24_CS) {\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"Maximum 1302083 compressed bytes @ 24fps\\n\"\n                      \"-> Specified rate exceeds this limit. Rate will be forced to 1302083 bytes.\\n\");\n        parameters->max_cs_size = OPJ_CINEMA_24_CS;\n    }\n\n    if (parameters->max_comp_size <= 0) {\n        /* No rate has been introduced, 24 fps is assumed */\n        parameters->max_comp_size = OPJ_CINEMA_24_COMP;\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"Maximum 1041666 compressed bytes @ 24fps\\n\"\n                      \"As no rate has been given, this limit will be used.\\n\");\n    } else if (parameters->max_comp_size > OPJ_CINEMA_24_COMP) {\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"Maximum 1041666 compressed bytes @ 24fps\\n\"\n                      \"-> Specified rate exceeds this limit. Rate will be forced to 1041666 bytes.\\n\");\n        parameters->max_comp_size = OPJ_CINEMA_24_COMP;\n    }\n\n    parameters->tcp_rates[0] = (OPJ_FLOAT32)(image->numcomps * image->comps[0].w *\n                               image->comps[0].h * image->comps[0].prec) /\n                               (OPJ_FLOAT32)(((OPJ_UINT32)parameters->max_cs_size) * 8 * image->comps[0].dx *\n                                       image->comps[0].dy);\n\n}",
+    "func_src_after": "static void opj_j2k_set_cinema_parameters(opj_cparameters_t *parameters,\n        opj_image_t *image, opj_event_mgr_t *p_manager)\n{\n    /* Configure cinema parameters */\n    int i;\n\n    /* No tiling */\n    parameters->tile_size_on = OPJ_FALSE;\n    parameters->cp_tdx = 1;\n    parameters->cp_tdy = 1;\n\n    /* One tile part for each component */\n    parameters->tp_flag = 'C';\n    parameters->tp_on = 1;\n\n    /* Tile and Image shall be at (0,0) */\n    parameters->cp_tx0 = 0;\n    parameters->cp_ty0 = 0;\n    parameters->image_offset_x0 = 0;\n    parameters->image_offset_y0 = 0;\n\n    /* Codeblock size= 32*32 */\n    parameters->cblockw_init = 32;\n    parameters->cblockh_init = 32;\n\n    /* Codeblock style: no mode switch enabled */\n    parameters->mode = 0;\n\n    /* No ROI */\n    parameters->roi_compno = -1;\n\n    /* No subsampling */\n    parameters->subsampling_dx = 1;\n    parameters->subsampling_dy = 1;\n\n    /* 9-7 transform */\n    parameters->irreversible = 1;\n\n    /* Number of layers */\n    if (parameters->tcp_numlayers > 1) {\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"1 single quality layer\"\n                      \"-> Number of layers forced to 1 (rather than %d)\\n\"\n                      \"-> Rate of the last layer (%3.1f) will be used\",\n                      parameters->tcp_numlayers,\n                      parameters->tcp_rates[parameters->tcp_numlayers - 1]);\n        parameters->tcp_rates[0] = parameters->tcp_rates[parameters->tcp_numlayers - 1];\n        parameters->tcp_numlayers = 1;\n    }\n\n    /* Resolution levels */\n    switch (parameters->rsiz) {\n    case OPJ_PROFILE_CINEMA_2K:\n        if (parameters->numresolution > 6) {\n            opj_event_msg(p_manager, EVT_WARNING,\n                          \"JPEG 2000 Profile-3 (2k dc profile) requires:\\n\"\n                          \"Number of decomposition levels <= 5\\n\"\n                          \"-> Number of decomposition levels forced to 5 (rather than %d)\\n\",\n                          parameters->numresolution + 1);\n            parameters->numresolution = 6;\n        }\n        break;\n    case OPJ_PROFILE_CINEMA_4K:\n        if (parameters->numresolution < 2) {\n            opj_event_msg(p_manager, EVT_WARNING,\n                          \"JPEG 2000 Profile-4 (4k dc profile) requires:\\n\"\n                          \"Number of decomposition levels >= 1 && <= 6\\n\"\n                          \"-> Number of decomposition levels forced to 1 (rather than %d)\\n\",\n                          parameters->numresolution + 1);\n            parameters->numresolution = 1;\n        } else if (parameters->numresolution > 7) {\n            opj_event_msg(p_manager, EVT_WARNING,\n                          \"JPEG 2000 Profile-4 (4k dc profile) requires:\\n\"\n                          \"Number of decomposition levels >= 1 && <= 6\\n\"\n                          \"-> Number of decomposition levels forced to 6 (rather than %d)\\n\",\n                          parameters->numresolution + 1);\n            parameters->numresolution = 7;\n        }\n        break;\n    default :\n        break;\n    }\n\n    /* Precincts */\n    parameters->csty |= 0x01;\n    if (parameters->numresolution == 1) {\n        parameters->res_spec = 1;\n        parameters->prcw_init[0] = 128;\n        parameters->prch_init[0] = 128;\n    } else {\n        parameters->res_spec = parameters->numresolution - 1;\n        for (i = 0; i < parameters->res_spec; i++) {\n            parameters->prcw_init[i] = 256;\n            parameters->prch_init[i] = 256;\n        }\n    }\n\n    /* The progression order shall be CPRL */\n    parameters->prog_order = OPJ_CPRL;\n\n    /* Progression order changes for 4K, disallowed for 2K */\n    if (parameters->rsiz == OPJ_PROFILE_CINEMA_4K) {\n        parameters->numpocs = (OPJ_UINT32)opj_j2k_initialise_4K_poc(parameters->POC,\n                              parameters->numresolution);\n    } else {\n        parameters->numpocs = 0;\n    }\n\n    /* Limited bit-rate */\n    parameters->cp_disto_alloc = 1;\n    if (parameters->max_cs_size <= 0) {\n        /* No rate has been introduced, 24 fps is assumed */\n        parameters->max_cs_size = OPJ_CINEMA_24_CS;\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"Maximum 1302083 compressed bytes @ 24fps\\n\"\n                      \"As no rate has been given, this limit will be used.\\n\");\n    } else if (parameters->max_cs_size > OPJ_CINEMA_24_CS) {\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"Maximum 1302083 compressed bytes @ 24fps\\n\"\n                      \"-> Specified rate exceeds this limit. Rate will be forced to 1302083 bytes.\\n\");\n        parameters->max_cs_size = OPJ_CINEMA_24_CS;\n    }\n\n    if (parameters->max_comp_size <= 0) {\n        /* No rate has been introduced, 24 fps is assumed */\n        parameters->max_comp_size = OPJ_CINEMA_24_COMP;\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"Maximum 1041666 compressed bytes @ 24fps\\n\"\n                      \"As no rate has been given, this limit will be used.\\n\");\n    } else if (parameters->max_comp_size > OPJ_CINEMA_24_COMP) {\n        opj_event_msg(p_manager, EVT_WARNING,\n                      \"JPEG 2000 Profile-3 and 4 (2k/4k dc profile) requires:\\n\"\n                      \"Maximum 1041666 compressed bytes @ 24fps\\n\"\n                      \"-> Specified rate exceeds this limit. Rate will be forced to 1041666 bytes.\\n\");\n        parameters->max_comp_size = OPJ_CINEMA_24_COMP;\n    }\n\n    parameters->tcp_rates[0] = (OPJ_FLOAT32)(image->numcomps * image->comps[0].w *\n                               image->comps[0].h * image->comps[0].prec) /\n                               (OPJ_FLOAT32)(((OPJ_UINT32)parameters->max_cs_size) * 8 * image->comps[0].dx *\n                                       image->comps[0].dy);\n\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 87,
+                "char_start": 3193,
+                "char_end": 3251,
+                "line": "    parameters->res_spec = parameters->numresolution - 1;\n"
+            },
+            {
+                "line_no": 88,
+                "char_start": 3251,
+                "char_end": 3300,
+                "line": "    for (i = 0; i < parameters->res_spec; i++) {\n"
+            },
+            {
+                "line_no": 89,
+                "char_start": 3300,
+                "char_end": 3340,
+                "line": "        parameters->prcw_init[i] = 256;\n"
+            },
+            {
+                "line_no": 90,
+                "char_start": 3340,
+                "char_end": 3380,
+                "line": "        parameters->prch_init[i] = 256;\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 87,
+                "char_start": 3193,
+                "char_end": 3235,
+                "line": "    if (parameters->numresolution == 1) {\n"
+            },
+            {
+                "line_no": 88,
+                "char_start": 3235,
+                "char_end": 3269,
+                "line": "        parameters->res_spec = 1;\n"
+            },
+            {
+                "line_no": 89,
+                "char_start": 3269,
+                "char_end": 3309,
+                "line": "        parameters->prcw_init[0] = 128;\n"
+            },
+            {
+                "line_no": 90,
+                "char_start": 3309,
+                "char_end": 3349,
+                "line": "        parameters->prch_init[0] = 128;\n"
+            },
+            {
+                "line_no": 91,
+                "char_start": 3349,
+                "char_end": 3362,
+                "line": "    } else {\n"
+            },
+            {
+                "line_no": 92,
+                "char_start": 3362,
+                "char_end": 3424,
+                "line": "        parameters->res_spec = parameters->numresolution - 1;\n"
+            },
+            {
+                "line_no": 93,
+                "char_start": 3424,
+                "char_end": 3477,
+                "line": "        for (i = 0; i < parameters->res_spec; i++) {\n"
+            },
+            {
+                "line_no": 94,
+                "char_start": 3477,
+                "char_end": 3521,
+                "line": "            parameters->prcw_init[i] = 256;\n"
+            },
+            {
+                "line_no": 95,
+                "char_start": 3521,
+                "char_end": 3565,
+                "line": "            parameters->prch_init[i] = 256;\n"
+            },
+            {
+                "line_no": 96,
+                "char_start": 3565,
+                "char_end": 3575,
+                "line": "        }\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 3197,
+                "char_end": 3370,
+                "chars": "if (parameters->numresolution == 1) {\n        parameters->res_spec = 1;\n        parameters->prcw_init[0] = 128;\n        parameters->prch_init[0] = 128;\n    } else {\n        "
+            },
+            {
+                "char_start": 3424,
+                "char_end": 3428,
+                "chars": "    "
+            },
+            {
+                "char_start": 3485,
+                "char_end": 3489,
+                "chars": "    "
+            },
+            {
+                "char_start": 3521,
+                "char_end": 3523,
+                "chars": "  "
+            },
+            {
+                "char_start": 3531,
+                "char_end": 3533,
+                "chars": "  "
+            },
+            {
+                "char_start": 3564,
+                "char_end": 3574,
+                "chars": "\n        }"
+            }
+        ]
+    },
+    "commit_link": "github.com/uclouvain/openjpeg/commit/4241ae6fbbf1de9658764a80944dc8108f2b4154",
+    "file_name": "src/lib/openjp2/j2k.c",
+    "vul_type": "cwe-787"
+}

@@ -1,0 +1,47 @@
+{
+    "func_name": "yaffsfs_istat",
+    "func_src_before": "    yaffsfs_istat(TSK_FS_INFO *fs, TSK_FS_ISTAT_FLAG_ENUM flags, FILE * hFile, TSK_INUM_T inum,\n    TSK_DADDR_T numblock, int32_t sec_skew)\n{\n    TSK_FS_META *fs_meta;\n    TSK_FS_FILE *fs_file;\n    YAFFSFS_INFO *yfs = (YAFFSFS_INFO *)fs;\n    char ls[12];\n    YAFFSFS_PRINT_ADDR print;\n    char timeBuf[32];\n    YaffsCacheObject * obj = NULL;\n    YaffsCacheVersion * version = NULL;\n    YaffsHeader * header = NULL;\n\n    yaffscache_version_find_by_inode(yfs, inum, &version, &obj);\n\n    if ((fs_file = tsk_fs_file_open_meta(fs, NULL, inum)) == NULL) {\n        return 1;\n    }\n    fs_meta = fs_file->meta;\n\n    tsk_fprintf(hFile, \"inode: %\" PRIuINUM \"\\n\", inum);\n    tsk_fprintf(hFile, \"%sAllocated\\n\",\n        (fs_meta->flags & TSK_FS_META_FLAG_ALLOC) ? \"\" : \"Not \");\n\n    if (fs_meta->link)\n        tsk_fprintf(hFile, \"symbolic link to: %s\\n\", fs_meta->link);\n\n    tsk_fprintf(hFile, \"uid / gid: %\" PRIuUID \" / %\" PRIuGID \"\\n\",\n        fs_meta->uid, fs_meta->gid);\n\n    tsk_fs_meta_make_ls(fs_meta, ls, sizeof(ls));\n    tsk_fprintf(hFile, \"mode: %s\\n\", ls);\n\n    tsk_fprintf(hFile, \"size: %\" PRIdOFF \"\\n\", fs_meta->size);\n    tsk_fprintf(hFile, \"num of links: %d\\n\", fs_meta->nlink);\n\n    if(version != NULL){\n        yaffsfs_read_header(yfs, &header, version->ycv_header_chunk->ycc_offset);\n        if(header != NULL){\n            tsk_fprintf(hFile, \"Name: %s\\n\", header->name);\n        }\n    }\n\n    if (sec_skew != 0) {\n        tsk_fprintf(hFile, \"\\nAdjusted Inode Times:\\n\");\n        fs_meta->mtime -= sec_skew;\n        fs_meta->atime -= sec_skew;\n        fs_meta->ctime -= sec_skew;\n\n        tsk_fprintf(hFile, \"Accessed:\\t%s\\n\",\n            tsk_fs_time_to_str(fs_meta->atime, timeBuf));\n        tsk_fprintf(hFile, \"File Modified:\\t%s\\n\",\n            tsk_fs_time_to_str(fs_meta->mtime, timeBuf));\n        tsk_fprintf(hFile, \"Inode Modified:\\t%s\\n\",\n            tsk_fs_time_to_str(fs_meta->ctime, timeBuf));\n\n        fs_meta->mtime += sec_skew;\n        fs_meta->atime += sec_skew;\n        fs_meta->ctime += sec_skew;\n\n        tsk_fprintf(hFile, \"\\nOriginal Inode Times:\\n\");\n    }\n    else {\n        tsk_fprintf(hFile, \"\\nInode Times:\\n\");\n    }\n\n    tsk_fprintf(hFile, \"Accessed:\\t%s\\n\",\n        tsk_fs_time_to_str(fs_meta->atime, timeBuf));\n    tsk_fprintf(hFile, \"File Modified:\\t%s\\n\",\n        tsk_fs_time_to_str(fs_meta->mtime, timeBuf));\n    tsk_fprintf(hFile, \"Inode Modified:\\t%s\\n\",\n        tsk_fs_time_to_str(fs_meta->ctime, timeBuf));\n\n    if(version != NULL){\n        tsk_fprintf(hFile, \"\\nHeader Chunk:\\n\");\n        tsk_fprintf(hFile, \"%\" PRIuDADDR \"\\n\", (version->ycv_header_chunk->ycc_offset / (yfs->page_size + yfs->spare_size)));\n    }\n\n    if (numblock > 0) {\n        TSK_OFF_T lower_size = numblock * fs->block_size;\n        fs_meta->size = (lower_size < fs_meta->size)?(lower_size):(fs_meta->size);\n    }\n    tsk_fprintf(hFile, \"\\nData Chunks:\\n\");\n\n\n    if (flags & TSK_FS_ISTAT_RUNLIST){\n        const TSK_FS_ATTR *fs_attr_default =\n            tsk_fs_file_attr_get_type(fs_file,\n                TSK_FS_ATTR_TYPE_DEFAULT, 0, 0);\n        if (fs_attr_default && (fs_attr_default->flags & TSK_FS_ATTR_NONRES)) {\n            if (tsk_fs_attr_print(fs_attr_default, hFile)) {\n                tsk_fprintf(hFile, \"\\nError creating run lists  \");\n                tsk_error_print(hFile);\n                tsk_error_reset();\n            }\n        }\n    }\n    else {\n        print.idx = 0;\n        print.hFile = hFile;\n\n        if (tsk_fs_file_walk(fs_file, TSK_FS_FILE_WALK_FLAG_AONLY,\n            (TSK_FS_FILE_WALK_CB)print_addr_act, (void *)&print)) {\n            tsk_fprintf(hFile, \"\\nError reading file:  \");\n            tsk_error_print(hFile);\n            tsk_error_reset();\n        }\n        else if (print.idx != 0) {\n            tsk_fprintf(hFile, \"\\n\");\n        }\n    }\n\n    tsk_fs_file_close(fs_file);\n\n    return 0;\n}",
+    "func_src_after": "    yaffsfs_istat(TSK_FS_INFO *fs, TSK_FS_ISTAT_FLAG_ENUM flags, FILE * hFile, TSK_INUM_T inum,\n    TSK_DADDR_T numblock, int32_t sec_skew)\n{\n    TSK_FS_META *fs_meta;\n    TSK_FS_FILE *fs_file;\n    YAFFSFS_INFO *yfs = (YAFFSFS_INFO *)fs;\n    char ls[12];\n    YAFFSFS_PRINT_ADDR print;\n    char timeBuf[128];\n    YaffsCacheObject * obj = NULL;\n    YaffsCacheVersion * version = NULL;\n    YaffsHeader * header = NULL;\n\n    yaffscache_version_find_by_inode(yfs, inum, &version, &obj);\n\n    if ((fs_file = tsk_fs_file_open_meta(fs, NULL, inum)) == NULL) {\n        return 1;\n    }\n    fs_meta = fs_file->meta;\n\n    tsk_fprintf(hFile, \"inode: %\" PRIuINUM \"\\n\", inum);\n    tsk_fprintf(hFile, \"%sAllocated\\n\",\n        (fs_meta->flags & TSK_FS_META_FLAG_ALLOC) ? \"\" : \"Not \");\n\n    if (fs_meta->link)\n        tsk_fprintf(hFile, \"symbolic link to: %s\\n\", fs_meta->link);\n\n    tsk_fprintf(hFile, \"uid / gid: %\" PRIuUID \" / %\" PRIuGID \"\\n\",\n        fs_meta->uid, fs_meta->gid);\n\n    tsk_fs_meta_make_ls(fs_meta, ls, sizeof(ls));\n    tsk_fprintf(hFile, \"mode: %s\\n\", ls);\n\n    tsk_fprintf(hFile, \"size: %\" PRIdOFF \"\\n\", fs_meta->size);\n    tsk_fprintf(hFile, \"num of links: %d\\n\", fs_meta->nlink);\n\n    if(version != NULL){\n        yaffsfs_read_header(yfs, &header, version->ycv_header_chunk->ycc_offset);\n        if(header != NULL){\n            tsk_fprintf(hFile, \"Name: %s\\n\", header->name);\n        }\n    }\n\n    if (sec_skew != 0) {\n        tsk_fprintf(hFile, \"\\nAdjusted Inode Times:\\n\");\n        fs_meta->mtime -= sec_skew;\n        fs_meta->atime -= sec_skew;\n        fs_meta->ctime -= sec_skew;\n\n        tsk_fprintf(hFile, \"Accessed:\\t%s\\n\",\n            tsk_fs_time_to_str(fs_meta->atime, timeBuf));\n        tsk_fprintf(hFile, \"File Modified:\\t%s\\n\",\n            tsk_fs_time_to_str(fs_meta->mtime, timeBuf));\n        tsk_fprintf(hFile, \"Inode Modified:\\t%s\\n\",\n            tsk_fs_time_to_str(fs_meta->ctime, timeBuf));\n\n        fs_meta->mtime += sec_skew;\n        fs_meta->atime += sec_skew;\n        fs_meta->ctime += sec_skew;\n\n        tsk_fprintf(hFile, \"\\nOriginal Inode Times:\\n\");\n    }\n    else {\n        tsk_fprintf(hFile, \"\\nInode Times:\\n\");\n    }\n\n    tsk_fprintf(hFile, \"Accessed:\\t%s\\n\",\n        tsk_fs_time_to_str(fs_meta->atime, timeBuf));\n    tsk_fprintf(hFile, \"File Modified:\\t%s\\n\",\n        tsk_fs_time_to_str(fs_meta->mtime, timeBuf));\n    tsk_fprintf(hFile, \"Inode Modified:\\t%s\\n\",\n        tsk_fs_time_to_str(fs_meta->ctime, timeBuf));\n\n    if(version != NULL){\n        tsk_fprintf(hFile, \"\\nHeader Chunk:\\n\");\n        tsk_fprintf(hFile, \"%\" PRIuDADDR \"\\n\", (version->ycv_header_chunk->ycc_offset / (yfs->page_size + yfs->spare_size)));\n    }\n\n    if (numblock > 0) {\n        TSK_OFF_T lower_size = numblock * fs->block_size;\n        fs_meta->size = (lower_size < fs_meta->size)?(lower_size):(fs_meta->size);\n    }\n    tsk_fprintf(hFile, \"\\nData Chunks:\\n\");\n\n\n    if (flags & TSK_FS_ISTAT_RUNLIST){\n        const TSK_FS_ATTR *fs_attr_default =\n            tsk_fs_file_attr_get_type(fs_file,\n                TSK_FS_ATTR_TYPE_DEFAULT, 0, 0);\n        if (fs_attr_default && (fs_attr_default->flags & TSK_FS_ATTR_NONRES)) {\n            if (tsk_fs_attr_print(fs_attr_default, hFile)) {\n                tsk_fprintf(hFile, \"\\nError creating run lists  \");\n                tsk_error_print(hFile);\n                tsk_error_reset();\n            }\n        }\n    }\n    else {\n        print.idx = 0;\n        print.hFile = hFile;\n\n        if (tsk_fs_file_walk(fs_file, TSK_FS_FILE_WALK_FLAG_AONLY,\n            (TSK_FS_FILE_WALK_CB)print_addr_act, (void *)&print)) {\n            tsk_fprintf(hFile, \"\\nError reading file:  \");\n            tsk_error_print(hFile);\n            tsk_error_reset();\n        }\n        else if (print.idx != 0) {\n            tsk_fprintf(hFile, \"\\n\");\n        }\n    }\n\n    tsk_fs_file_close(fs_file);\n\n    return 0;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 9,
+                "char_start": 285,
+                "char_end": 307,
+                "line": "    char timeBuf[32];\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 9,
+                "char_start": 285,
+                "char_end": 308,
+                "line": "    char timeBuf[128];\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [
+            {
+                "char_start": 302,
+                "char_end": 303,
+                "chars": "3"
+            }
+        ],
+        "added": [
+            {
+                "char_start": 302,
+                "char_end": 303,
+                "chars": "1"
+            },
+            {
+                "char_start": 304,
+                "char_end": 305,
+                "chars": "8"
+            }
+        ]
+    },
+    "commit_link": "github.com/sleuthkit/sleuthkit/commit/459ae818fc8dae717549810150de4d191ce158f1",
+    "file_name": "tsk/fs/yaffs.cpp",
+    "vul_type": "cwe-787"
+}

@@ -1,0 +1,82 @@
+{
+    "func_name": "NeXTDecode",
+    "func_src_before": "NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)\n{\n\tstatic const char module[] = \"NeXTDecode\";\n\tunsigned char *bp, *op;\n\ttmsize_t cc;\n\tuint8* row;\n\ttmsize_t scanline, n;\n\n\t(void) s;\n\t/*\n\t * Each scanline is assumed to start off as all\n\t * white (we assume a PhotometricInterpretation\n\t * of ``min-is-black'').\n\t */\n\tfor (op = (unsigned char*) buf, cc = occ; cc-- > 0;)\n\t\t*op++ = 0xff;\n\n\tbp = (unsigned char *)tif->tif_rawcp;\n\tcc = tif->tif_rawcc;\n\tscanline = tif->tif_scanlinesize;\n\tif (occ % scanline)\n\t{\n\t\tTIFFErrorExt(tif->tif_clientdata, module, \"Fractional scanlines cannot be read\");\n\t\treturn (0);\n\t}\n\tfor (row = buf; cc > 0 && occ > 0; occ -= scanline, row += scanline) {\n\t\tn = *bp++, cc--;\n\t\tswitch (n) {\n\t\tcase LITERALROW:\n\t\t\t/*\n\t\t\t * The entire scanline is given as literal values.\n\t\t\t */\n\t\t\tif (cc < scanline)\n\t\t\t\tgoto bad;\n\t\t\t_TIFFmemcpy(row, bp, scanline);\n\t\t\tbp += scanline;\n\t\t\tcc -= scanline;\n\t\t\tbreak;\n\t\tcase LITERALSPAN: {\n\t\t\ttmsize_t off;\n\t\t\t/*\n\t\t\t * The scanline has a literal span that begins at some\n\t\t\t * offset.\n\t\t\t */\n\t\t\tif( cc < 4 )\n\t\t\t\tgoto bad;\n\t\t\toff = (bp[0] * 256) + bp[1];\n\t\t\tn = (bp[2] * 256) + bp[3];\n\t\t\tif (cc < 4+n || off+n > scanline)\n\t\t\t\tgoto bad;\n\t\t\t_TIFFmemcpy(row+off, bp+4, n);\n\t\t\tbp += 4+n;\n\t\t\tcc -= 4+n;\n\t\t\tbreak;\n\t\t}\n\t\tdefault: {\n\t\t\tuint32 npixels = 0, grey;\n\t\t\tuint32 imagewidth = tif->tif_dir.td_imagewidth;\n            if( isTiled(tif) )\n                imagewidth = tif->tif_dir.td_tilewidth;\n\n\t\t\t/*\n\t\t\t * The scanline is composed of a sequence of constant\n\t\t\t * color ``runs''.  We shift into ``run mode'' and\n\t\t\t * interpret bytes as codes of the form\n\t\t\t * <color><npixels> until we've filled the scanline.\n\t\t\t */\n\t\t\top = row;\n\t\t\tfor (;;) {\n\t\t\t\tgrey = (uint32)((n>>6) & 0x3);\n\t\t\t\tn &= 0x3f;\n\t\t\t\t/*\n\t\t\t\t * Ensure the run does not exceed the scanline\n\t\t\t\t * bounds, potentially resulting in a security\n\t\t\t\t * issue.\n\t\t\t\t */\n\t\t\t\twhile (n-- > 0 && npixels < imagewidth)\n\t\t\t\t\tSETPIXEL(op, grey);\n\t\t\t\tif (npixels >= imagewidth)\n\t\t\t\t\tbreak;\n\t\t\t\tif (cc == 0)\n\t\t\t\t\tgoto bad;\n\t\t\t\tn = *bp++, cc--;\n\t\t\t}\n\t\t\tbreak;\n\t\t}\n\t\t}\n\t}\n\ttif->tif_rawcp = (uint8*) bp;\n\ttif->tif_rawcc = cc;\n\treturn (1);\nbad:\n\tTIFFErrorExt(tif->tif_clientdata, module, \"Not enough data for scanline %ld\",\n\t    (long) tif->tif_row);\n\treturn (0);\n}",
+    "func_src_after": "NeXTDecode(TIFF* tif, uint8* buf, tmsize_t occ, uint16 s)\n{\n\tstatic const char module[] = \"NeXTDecode\";\n\tunsigned char *bp, *op;\n\ttmsize_t cc;\n\tuint8* row;\n\ttmsize_t scanline, n;\n\n\t(void) s;\n\t/*\n\t * Each scanline is assumed to start off as all\n\t * white (we assume a PhotometricInterpretation\n\t * of ``min-is-black'').\n\t */\n\tfor (op = (unsigned char*) buf, cc = occ; cc-- > 0;)\n\t\t*op++ = 0xff;\n\n\tbp = (unsigned char *)tif->tif_rawcp;\n\tcc = tif->tif_rawcc;\n\tscanline = tif->tif_scanlinesize;\n\tif (occ % scanline)\n\t{\n\t\tTIFFErrorExt(tif->tif_clientdata, module, \"Fractional scanlines cannot be read\");\n\t\treturn (0);\n\t}\n\tfor (row = buf; cc > 0 && occ > 0; occ -= scanline, row += scanline) {\n\t\tn = *bp++, cc--;\n\t\tswitch (n) {\n\t\tcase LITERALROW:\n\t\t\t/*\n\t\t\t * The entire scanline is given as literal values.\n\t\t\t */\n\t\t\tif (cc < scanline)\n\t\t\t\tgoto bad;\n\t\t\t_TIFFmemcpy(row, bp, scanline);\n\t\t\tbp += scanline;\n\t\t\tcc -= scanline;\n\t\t\tbreak;\n\t\tcase LITERALSPAN: {\n\t\t\ttmsize_t off;\n\t\t\t/*\n\t\t\t * The scanline has a literal span that begins at some\n\t\t\t * offset.\n\t\t\t */\n\t\t\tif( cc < 4 )\n\t\t\t\tgoto bad;\n\t\t\toff = (bp[0] * 256) + bp[1];\n\t\t\tn = (bp[2] * 256) + bp[3];\n\t\t\tif (cc < 4+n || off+n > scanline)\n\t\t\t\tgoto bad;\n\t\t\t_TIFFmemcpy(row+off, bp+4, n);\n\t\t\tbp += 4+n;\n\t\t\tcc -= 4+n;\n\t\t\tbreak;\n\t\t}\n\t\tdefault: {\n\t\t\tuint32 npixels = 0, grey;\n\t\t\tuint32 imagewidth = tif->tif_dir.td_imagewidth;\n            if( isTiled(tif) )\n                imagewidth = tif->tif_dir.td_tilewidth;\n            tmsize_t op_offset = 0;\n\n\t\t\t/*\n\t\t\t * The scanline is composed of a sequence of constant\n\t\t\t * color ``runs''.  We shift into ``run mode'' and\n\t\t\t * interpret bytes as codes of the form\n\t\t\t * <color><npixels> until we've filled the scanline.\n\t\t\t */\n\t\t\top = row;\n\t\t\tfor (;;) {\n\t\t\t\tgrey = (uint32)((n>>6) & 0x3);\n\t\t\t\tn &= 0x3f;\n\t\t\t\t/*\n\t\t\t\t * Ensure the run does not exceed the scanline\n\t\t\t\t * bounds, potentially resulting in a security\n\t\t\t\t * issue.\n\t\t\t\t */\n\t\t\t\twhile (n-- > 0 && npixels < imagewidth && op_offset < scanline)\n\t\t\t\t\tSETPIXEL(op, grey);\n\t\t\t\tif (npixels >= imagewidth)\n\t\t\t\t\tbreak;\n                if (op_offset >= scanline ) {\n                    TIFFErrorExt(tif->tif_clientdata, module, \"Invalid data for scanline %ld\",\n                        (long) tif->tif_row);\n                    return (0);\n                }\n\t\t\t\tif (cc == 0)\n\t\t\t\t\tgoto bad;\n\t\t\t\tn = *bp++, cc--;\n\t\t\t}\n\t\t\tbreak;\n\t\t}\n\t\t}\n\t}\n\ttif->tif_rawcp = (uint8*) bp;\n\ttif->tif_rawcc = cc;\n\treturn (1);\nbad:\n\tTIFFErrorExt(tif->tif_clientdata, module, \"Not enough data for scanline %ld\",\n\t    (long) tif->tif_row);\n\treturn (0);\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 77,
+                "char_start": 1882,
+                "char_end": 1926,
+                "line": "\t\t\t\twhile (n-- > 0 && npixels < imagewidth)\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 61,
+                "char_start": 1450,
+                "char_end": 1486,
+                "line": "            tmsize_t op_offset = 0;\n"
+            },
+            {
+                "line_no": 78,
+                "char_start": 1918,
+                "char_end": 1986,
+                "line": "\t\t\t\twhile (n-- > 0 && npixels < imagewidth && op_offset < scanline)\n"
+            },
+            {
+                "line_no": 82,
+                "char_start": 2054,
+                "char_end": 2100,
+                "line": "                if (op_offset >= scanline ) {\n"
+            },
+            {
+                "line_no": 83,
+                "char_start": 2100,
+                "char_end": 2195,
+                "line": "                    TIFFErrorExt(tif->tif_clientdata, module, \"Invalid data for scanline %ld\",\n"
+            },
+            {
+                "line_no": 84,
+                "char_start": 2195,
+                "char_end": 2241,
+                "line": "                        (long) tif->tif_row);\n"
+            },
+            {
+                "line_no": 85,
+                "char_start": 2241,
+                "char_end": 2273,
+                "line": "                    return (0);\n"
+            },
+            {
+                "line_no": 86,
+                "char_start": 2273,
+                "char_end": 2291,
+                "line": "                }\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 1450,
+                "char_end": 1486,
+                "chars": "            tmsize_t op_offset = 0;\n"
+            },
+            {
+                "char_start": 1960,
+                "char_end": 1984,
+                "chars": " && op_offset < scanline"
+            },
+            {
+                "char_start": 2053,
+                "char_end": 2290,
+                "chars": "\n                if (op_offset >= scanline ) {\n                    TIFFErrorExt(tif->tif_clientdata, module, \"Invalid data for scanline %ld\",\n                        (long) tif->tif_row);\n                    return (0);\n                }"
+            }
+        ]
+    },
+    "commit_link": "github.com/vadz/libtiff/commit/b18012dae552f85dcc5c57d3bf4e997a15b1cc1c",
+    "file_name": "libtiff/tif_next.c",
+    "vul_type": "cwe-787"
+}

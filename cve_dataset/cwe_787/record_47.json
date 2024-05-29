@@ -1,0 +1,41 @@
+{
+    "func_name": "rds_rdma_extra_size",
+    "func_src_before": "int rds_rdma_extra_size(struct rds_rdma_args *args)\n{\n\tstruct rds_iovec vec;\n\tstruct rds_iovec __user *local_vec;\n\tint tot_pages = 0;\n\tunsigned int nr_pages;\n\tunsigned int i;\n\n\tlocal_vec = (struct rds_iovec __user *)(unsigned long) args->local_vec_addr;\n\n\t/* figure out the number of pages in the vector */\n\tfor (i = 0; i < args->nr_local; i++) {\n\t\tif (copy_from_user(&vec, &local_vec[i],\n\t\t\t\t   sizeof(struct rds_iovec)))\n\t\t\treturn -EFAULT;\n\n\t\tnr_pages = rds_pages_in_vec(&vec);\n\t\tif (nr_pages == 0)\n\t\t\treturn -EINVAL;\n\n\t\ttot_pages += nr_pages;\n\n\t\t/*\n\t\t * nr_pages for one entry is limited to (UINT_MAX>>PAGE_SHIFT)+1,\n\t\t * so tot_pages cannot overflow without first going negative.\n\t\t */\n\t\tif (tot_pages < 0)\n\t\t\treturn -EINVAL;\n\t}\n\n\treturn tot_pages * sizeof(struct scatterlist);\n}",
+    "func_src_after": "int rds_rdma_extra_size(struct rds_rdma_args *args)\n{\n\tstruct rds_iovec vec;\n\tstruct rds_iovec __user *local_vec;\n\tint tot_pages = 0;\n\tunsigned int nr_pages;\n\tunsigned int i;\n\n\tlocal_vec = (struct rds_iovec __user *)(unsigned long) args->local_vec_addr;\n\n\tif (args->nr_local == 0)\n\t\treturn -EINVAL;\n\n\t/* figure out the number of pages in the vector */\n\tfor (i = 0; i < args->nr_local; i++) {\n\t\tif (copy_from_user(&vec, &local_vec[i],\n\t\t\t\t   sizeof(struct rds_iovec)))\n\t\t\treturn -EFAULT;\n\n\t\tnr_pages = rds_pages_in_vec(&vec);\n\t\tif (nr_pages == 0)\n\t\t\treturn -EINVAL;\n\n\t\ttot_pages += nr_pages;\n\n\t\t/*\n\t\t * nr_pages for one entry is limited to (UINT_MAX>>PAGE_SHIFT)+1,\n\t\t * so tot_pages cannot overflow without first going negative.\n\t\t */\n\t\tif (tot_pages < 0)\n\t\t\treturn -EINVAL;\n\t}\n\n\treturn tot_pages * sizeof(struct scatterlist);\n}",
+    "line_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "line_no": 11,
+                "char_start": 255,
+                "char_end": 281,
+                "line": "\tif (args->nr_local == 0)\n"
+            },
+            {
+                "line_no": 12,
+                "char_start": 281,
+                "char_end": 299,
+                "line": "\t\treturn -EINVAL;\n"
+            },
+            {
+                "line_no": 13,
+                "char_start": 299,
+                "char_end": 300,
+                "line": "\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 256,
+                "char_end": 301,
+                "chars": "if (args->nr_local == 0)\n\t\treturn -EINVAL;\n\n\t"
+            }
+        ]
+    },
+    "commit_link": "github.com/torvalds/linux/commit/c095508770aebf1b9218e77026e48345d719b17c",
+    "file_name": "net/rds/rdma.c",
+    "vul_type": "cwe-787"
+}

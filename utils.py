@@ -1,8 +1,13 @@
 import difflib
 from typing import List, Optional, Dict
 import os
+import dotenv
 import json
 import logging
+
+from llama_index.core.storage.chat_store import SimpleChatStore
+from llama_index.core.memory import ChatMemoryBuffer
+
 
 PROMPT_PATH = "prompt.json"
 
@@ -48,6 +53,11 @@ def get_prompt(name: str, _type: str, prompt_path: str = PROMPT_PATH) -> Optiona
             return _p['prompt']
     return None
 
+def get_open_ai_key():
+    dotenv.load_dotenv()
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+    assert (OPENAI_API_KEY and "Pleae set api key")
+
 
 def setup_logger(file_path_to_log):
     """Set up the logger to log to both file and console."""
@@ -72,6 +82,15 @@ def setup_logger(file_path_to_log):
     logger.addHandler(console_handler)
     
     return logger
+
+def get_dataset_json_schema(schema_filename, logger=None):
+    try:
+        with open(schema_filename) as f:
+            return json.load(f)
+    except FileNotFoundError as e:
+        logger.error(f"File not found: {schema_filename} - Error: {str(e)}")
+    except Exception as e:
+        logger.error(f"An error occurred while reading the file: {schema_filename} - Error: {str(e)}")
 
 def read_jsonl_to_json(filename, logger):
     """Reads a JSONL file and returns a list of dictionaries, logs errors if any."""
@@ -105,3 +124,15 @@ def list_jsonl_files(directory, logger):
             continue
 
     return files
+
+def filter_json(json_values, filter_keys):
+    return {key: json_values[key] for key in filter_keys if key in json_values}
+
+
+def write_json_file(target_file, data, logger=None):
+    os.makedirs(os.path.dirname(target_file), exist_ok=True)
+    with open(target_file, 'w') as outfile:
+        json.dump(data, outfile, indent=4)
+    
+    logger.info(f"Successfully created {target_file}")
+

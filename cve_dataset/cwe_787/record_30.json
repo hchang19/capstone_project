@@ -1,0 +1,48 @@
+{
+    "func_name": "ecall_restore",
+    "func_src_before": "int ecall_restore(const char *input, uint64_t input_len, char **output,\n                  uint64_t *output_len) {\n  if (!asylo::primitives::TrustedPrimitives::IsOutsideEnclave(input,\n                                                              input_len) ||\n      !asylo::primitives::TrustedPrimitives::IsOutsideEnclave(\n          output_len, sizeof(uint64_t))) {\n    asylo::primitives::TrustedPrimitives::BestEffortAbort(\n        \"ecall_restore: input/output found to not be in untrusted memory.\");\n  }\n  int result = 0;\n  size_t tmp_output_len;\n  try {\n    result = asylo::Restore(input, static_cast<size_t>(input_len), output,\n                            &tmp_output_len);\n  } catch (...) {\n    LOG(FATAL) << \"Uncaught exception in enclave\";\n  }\n\n  if (output_len) {\n    *output_len = static_cast<uint64_t>(tmp_output_len);\n  }\n  return result;\n}",
+    "func_src_after": "int ecall_restore(const char *input, uint64_t input_len, char **output,\n                  uint64_t *output_len) {\n  if (!asylo::primitives::TrustedPrimitives::IsOutsideEnclave(input,\n                                                              input_len) ||\n      !asylo::primitives::TrustedPrimitives::IsOutsideEnclave(\n          output_len, sizeof(uint64_t)) ||\n      !asylo::primitives::TrustedPrimitives::IsOutsideEnclave(output,\n                                                              *output_len)) {\n    asylo::primitives::TrustedPrimitives::BestEffortAbort(\n        \"ecall_restore: input/output found to not be in untrusted memory.\");\n  }\n  int result = 0;\n  size_t tmp_output_len;\n  try {\n    result = asylo::Restore(input, static_cast<size_t>(input_len), output,\n                            &tmp_output_len);\n  } catch (...) {\n    LOG(FATAL) << \"Uncaught exception in enclave\";\n  }\n\n  if (output_len) {\n    *output_len = static_cast<uint64_t>(tmp_output_len);\n  }\n  return result;\n}",
+    "line_changes": {
+        "deleted": [
+            {
+                "line_no": 6,
+                "char_start": 322,
+                "char_end": 365,
+                "line": "          output_len, sizeof(uint64_t))) {\n"
+            }
+        ],
+        "added": [
+            {
+                "line_no": 6,
+                "char_start": 322,
+                "char_end": 365,
+                "line": "          output_len, sizeof(uint64_t)) ||\n"
+            },
+            {
+                "line_no": 7,
+                "char_start": 365,
+                "char_end": 435,
+                "line": "      !asylo::primitives::TrustedPrimitives::IsOutsideEnclave(output,\n"
+            },
+            {
+                "line_no": 8,
+                "char_start": 435,
+                "char_end": 513,
+                "line": "                                                              *output_len)) {\n"
+            }
+        ]
+    },
+    "char_changes": {
+        "deleted": [],
+        "added": [
+            {
+                "char_start": 361,
+                "char_end": 509,
+                "chars": " ||\n      !asylo::primitives::TrustedPrimitives::IsOutsideEnclave(output,\n                                                              *output_len)"
+            }
+        ]
+    },
+    "commit_link": "github.com/google/asylo/commit/382da2b8b09cbf928668a2445efb778f76bd9c8a",
+    "file_name": "asylo/platform/primitives/sgx/ecalls.cc",
+    "vul_type": "cwe-787"
+}
