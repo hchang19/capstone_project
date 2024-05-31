@@ -1,0 +1,77 @@
+func_name, pred_label, true_label
+ImagingLibTiffDecode, 1, 1
+ImagingLibTiffDecode, 1, 0
+futex_requeue, 1, 1
+futex_requeue, 1, 0
+_gd2GetHeader, 1, 1
+_gd2GetHeader, 1, 0
+jpc_pi_nextcprl, 1, 0, 1, 0, 0, 1
+jpc_pi_nextcprl, 1, 0
+process_get_command, 1, 1
+process_get_command, 1, 0
+Exiv2::WebPImage::getHeaderOffset, 1, 1
+Exiv2::WebPImage::getHeaderOffset, 1, 0
+ring_buffer_resize, 1, 1, 1, 0, 0, 1
+ring_buffer_resize, 1, 0
+rwpng_read_image24_libpng, 1, 1
+rwpng_read_image24_libpng, 1, 0
+UnicodeString::doAppend, 1, 1
+UnicodeString::doAppend, 1, 0
+WriteBMPImage, 1, 1
+WriteBMPImage, 1, 0
+AllocateDataSet, 0, 1
+AllocateDataSet, 1, 0
+vc4_get_bcl, 1, 1
+vc4_get_bcl, 1, 0
+TIFFSeekCustomStream, 1, 1
+TIFFSeekCustomStream, 1, 0
+perf_cpu_time_max_percent_handler, 1, 1
+perf_cpu_time_max_percent_handler, 1, 0
+git_delta_apply, 1, 1
+git_delta_apply, 1, 0
+uvesafb_setcmap, 1, 1
+uvesafb_setcmap, 1, 0
+b_unpack, 1, 1
+b_unpack, 1, 0
+copyaudiodata, 1, 1
+copyaudiodata, 1, 0
+_zend_hash_init, 1, 1
+_zend_hash_init, 1, 0
+Perl_re_op_compile, 1, 1
+Perl_re_op_compile, 1, 0
+mem_check_range, 1, 1
+mem_check_range, 1, 0
+set_geometry, 1, 1
+set_geometry, 1, 0
+__get_data_block, 1, 1
+__get_data_block, 1, 0
+HPHP::StringUtil::Implode, 1, 1
+HPHP::StringUtil::Implode, 1, 0
+PHP_FUNCTION, 1, 1
+PHP_FUNCTION, 1, 0
+amqp_handle_input, 1, 1
+amqp_handle_input, 1, 0
+choose_volume, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1
+choose_volume, 1, 0
+cs_winkernel_malloc, 1, 1
+cs_winkernel_malloc, 1, 0
+hfs_cat_traverse, 1, 1
+hfs_cat_traverse, 1, 0
+PyImaging_MapBuffer, 1, 1
+PyImaging_MapBuffer, 1, 0
+read_entry, 1, 1, 0, 0, 0, 1
+read_entry, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0
+read_SubStreamsInfo, 1, 1
+read_SubStreamsInfo, 1, 0
+gdi_Bitmap_Decompress, 1, 1
+gdi_Bitmap_Decompress, 1, 0
+SWFInput_readSBits, 1, 1
+SWFInput_readSBits, 1, 0
+layer_resize, 1, 1
+layer_resize, 1, 0
+ApplyEvaluateOperator, 1, 1
+ApplyEvaluateOperator, 1, 0
+authDigestNonceLink, 1, 1
+authDigestNonceLink, 1, 0
+jpc_dec_process_siz, 1, 1
+jpc_dec_process_siz, 1, 1, 0, 0, 0, 0

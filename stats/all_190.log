@@ -1,0 +1,4 @@
+Experiment Name,Accuracy,Precision,Recall
+gpt-4-turbo base query,0.553,0.536,0.789
+gpt-4-turbo rag indexed query,0.471,0.478,0.971
+gpt-4-turbo llama index query,0.507,0.517,0.429

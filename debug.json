@@ -1,0 +1,167 @@
+{
+    "model": "gpt-4-turbo",
+    "temperature": 0.1,
+    "tools": [
+        {
+            "type": "function",
+            "function": {
+                "name": "decode_zbuf_changes_tool",
+                "description": "Useful for retrieving specific information about the line changes of the vulnerability patch for function decode_zbuf",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "title": "Input",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "input"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "decode_zbuf_details_tool",
+                "description": "Useful for retrieving specific information about the function before and after the vulnerability patch for function decode_zbuf",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "title": "Input",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "input"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "flb_gzip_compress_changes_tool",
+                "description": "Useful for retrieving specific information about the line changes of the vulnerability patch for function flb_gzip_compress",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "title": "Input",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "input"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "flb_gzip_compress_details_tool",
+                "description": "Useful for retrieving specific information about the function before and after the vulnerability patch for function flb_gzip_compress",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "title": "Input",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "input"
+                    ]
+                }
+            }
+        }
+    ],
+    "tool_choice": "auto"
+}
+
+{
+    "model": "gpt-4-turbo",
+    "temperature": 0.1,
+    "tools": [
+        {
+            "type": "function",
+            "function": {
+                "name": "ContentLine_Analyzer::DoDeliverOnce_changes_tool",
+                "description": "Useful for retrieving specific information about the line changes of the vulnerability patch for function ContentLine_Analyzer::DoDeliverOnce",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "title": "Input",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "input"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "ContentLine_Analyzer::DoDeliverOnce_details_tool",
+                "description": "Useful for retrieving specific information about the function before and after the vulnerability patch for function ContentLine_Analyzer::DoDeliverOnce",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "title": "Input",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "input"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "FromkLinuxSockAddr_changes_tool",
+                "description": "Useful for retrieving specific information about the line changes of the vulnerability patch for function FromkLinuxSockAddr",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "title": "Input",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "input"
+                    ]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "decode_zbuf_changes_tool",
+                "description": "Useful for retrieving specific information about the line changes of the vulnerability patch for function decode_zbuf",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "input": {
+                            "title": "Input",
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "input"
+                    ]
+                }
+            }
+        }
+    ],
+    "tool_choice": "auto"
+}

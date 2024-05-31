@@ -1,0 +1,3 @@
+2024-05-30 00:54:54,399 - INFO - Training Directories: ./cve_dataset/train
+2024-05-30 00:54:54,399 - INFO - func_name, vul_type, true_label, pred_label
+2024-05-30 00:54:54,399 - INFO - Scanning file: ./cve_dataset/train/cwe-787.jsonl

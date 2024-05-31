@@ -40,10 +40,10 @@ def safe_get(list, index):
     except IndexError:
         return None
 
-class UserCodePrompt:
-    def __init__(self, code):
-        self.role = "user"
-        self.content = f"Code: {code}"
+class UserQueryPromptWrapper:
+    def __init__(self, content, role="user"):
+        self.role = role
+        self.content = content
 
     def to_dict(self):
         return {"role": self.role, "content": self.content}

@@ -1,0 +1,2 @@
+Experiment Name,Accuracy,Precision,Recall
+gpt-4-turbo_190 rag indexed query,0.471,0.478,0.971

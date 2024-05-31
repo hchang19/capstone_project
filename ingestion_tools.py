@@ -5,10 +5,17 @@ from llama_index.core.node_parser import SentenceSplitter, JSONNodeParser
 from llama_index.core.indices.struct_store import JSONQueryEngine
 from llama_index.core.tools import FunctionTool, QueryEngineTool
 from llama_index.core.vector_stores import MetadataFilters, FilterCondition
-
-from llama_index.readers.json import JSONReader
-
 from typing import List, Optional
+
+import re
+
+
+def enforce_fnc_name(tool_name):
+    # openAI has a specific format for tool names that must be enforced
+    # Check if function_name matches the pattern
+    pattern = r'[^a-zA-Z0-9_-]'
+    return re.sub(pattern, '', tool_name)
+
 def get_doc_tools(
     file_path: str,
     name: str,
@@ -97,15 +104,17 @@ def get_json_tools(
     #     use_async=True,
     # )
     # vector_query_engine = vector_index.as_query_engine()
-    function_name = json_fnc_values["func_name"]
+    function_name = enforce_fnc_name(json_fnc_values["func_name"])
     json_fnc_query_engine = JSONQueryEngine(
         json_value=json_fnc_values,
-        json_schema=json_fnc_schema
+        json_schema=json_fnc_schema,
+        function_name=f"{function_name}_details_fnc"
     )
 
     json_changes_query_engine = JSONQueryEngine(
         json_value=json_changes_values,
-        json_schema=json_changes_schema
+        json_schema=json_changes_schema,
+        function_name=f"{function_name}_changes_fnc",
     )
 
     # # transform the engine into tools
@@ -125,7 +134,7 @@ def get_json_tools(
 
     json_fnc_tool = QueryEngineTool.from_defaults(
         query_engine=json_fnc_query_engine,
-        name=f"{function_name}_fnc_tool",
+        name=f"{function_name}_details_tool",
         description=(
             f"Useful for retrieving specific information about the function before and after the vulnerability patch for function {function_name}"
         )

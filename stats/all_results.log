@@ -1,0 +1,13 @@
+vul_type  accuracy  precision    recall
+cwe-022   0.450980   0.470588  0.784314
+cwe-078   0.505263   0.503597  0.736842
+cwe-079   0.533333   0.520548  0.844444
+cwe-089   0.528610   0.518116  0.781421
+cwe-125   0.544402   0.527919  0.806202
+cwe-190   0.473684   0.484848  0.842105
+cwe-416   0.477477   0.477273  0.777778
+cwe-476   0.528571   0.518868  0.785714
+cwe-787   0.450000   0.466667  0.700000
+Highest accuracy group: cwe-125 with accuracy 0.544
+Lowest accuracy group: cwe-787 with accuracy 0.450
+Overall Accuracy: 0.50

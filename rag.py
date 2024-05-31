@@ -36,7 +36,9 @@ def parse_response(api_response):
     response_object = json.loads(api_response)
     print(response_object.keys())
     return response_object['input'], response_object['output']
-def rag_query(user_input, logger = None):
+
+
+def call_rag_query(user_input, logger = None):
     if logger is None:
         logger = setup_logger(DEFAULT_LOG_PATH)
 

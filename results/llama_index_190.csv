@@ -1,0 +1,92 @@
+jpc_pi_nextcprl,1, 1
+AllocateDataSet,0, 0
+vc4_get_bcl,0, 1
+HPHP::StringUtil::Implode,1, 0
+ApplyEvaluateOperator,1, 0
+amqp_handle_input,0, 0
+gdi_Bitmap_Decompress,1, 0
+layer_resize,The code snippet provided is associated with the function `layer_resize`. After retrieving the patch details and line changes, it appears that the code does have a vulnerability related to CWE-190 (Integer Overflow or Wraparound). The vulnerability is present in the calculation of `tilemap_size` and the subsequent checks, which could lead to an integer overflow if `x_size` and `y_size` are large enough.
+
+Therefore, the code snippet has the specified vulnerability. 
+
+Returning: 1, 0
+uvesafb_setcmap,0, 1
+vc4_get_bcl,0, 0
+jpc_dec_process_siz,0, 1
+amqp_handle_input,0, 1
+PHP_FUNCTION,0, 0
+WriteBMPImage,1, 0
+ImagingLibTiffDecode,0, 0
+b_unpack,0, 0
+process_get_command,0, 1
+TIFFSeekCustomStream,1, 0
+read_entry,1, 0
+UnicodeString::doAppend,0, 0
+copyaudiodata,1, 1
+perf_cpu_time_max_percent_handler,0, 1
+copyaudiodata,The code snippet provided does not contain the specific vulnerability (CWE-190: Integer Overflow or Wraparound) as per the details and line changes associated with the function `copyaudiodata`. Therefore, the answer is:
+
+0, 0
+gdi_Bitmap_Decompress,0, 1
+_gd2GetHeader,1, 1
+mem_check_range,0, 1
+PyImaging_MapBuffer,1, 1
+futex_requeue,0, 1
+futex_requeue,0, 0
+ring_buffer_resize,0, 1
+layer_resize,1, 1
+Exiv2::WebPImage::getHeaderOffset,0, 1
+hfs_cat_traverse,1, 0
+read_SubStreamsInfo,1, 1
+cs_winkernel_malloc,1, 0
+TIFFSeekCustomStream,The provided code snippet does not contain the specific vulnerability (CWE-190: Integer Overflow or Wraparound) based on the analysis of the function details and line changes. Therefore, the answer is:
+
+0, 1
+AllocateDataSet,1, 1
+_zend_hash_init,0, 0
+jpc_dec_process_siz,0, 0
+b_unpack,0, 1
+SWFInput_readSBits,1, 0
+PyImaging_MapBuffer,Based on the tools used, there was an error in retrieving the line changes for the vulnerability patch. However, the details tool confirmed that the type of the CWE vulnerability is cwe-190. Given this information and the error in fetching line changes, I will return -1 as I am unsure if the specific vulnerability is present in the code snippet without the complete data. 
+
+Return: -1, 0
+git_delta_apply,0, 0
+process_get_command,0, 0
+ApplyEvaluateOperator,1, 1
+jpc_pi_nextcprl,1, 0
+authDigestNonceLink,0, 1
+git_delta_apply,0, 1
+WriteBMPImage,1, 1
+HPHP::StringUtil::Implode,1, 1
+set_geometry,0, 0
+perf_cpu_time_max_percent_handler,0, 0
+read_entry,0, 1
+choose_volume,None, 0
+rwpng_read_image24_libpng,1, 0
+cs_winkernel_malloc,1, 1
+choose_volume,0, 1
+hfs_cat_traverse,0, 1
+ring_buffer_resize,0, 0
+__get_data_block,1, 1
+mem_check_range,The code snippet provided does not have any vulnerability associated with it based on the tools used to check for patches and details. Therefore, the answer is:
+
+0, 0
+Exiv2::WebPImage::getHeaderOffset,Based on the tools' responses, there is no information available regarding the vulnerability patch or line changes for the function `WebPImage::getHeaderOffset`. Therefore, I cannot determine if the code has the specified vulnerability (CWE-190). 
+
+Returning -1 as I am unsure., 0
+UnicodeString::doAppend,0, 1
+_gd2GetHeader,1, 0
+rwpng_read_image24_libpng,1, 1
+ImagingLibTiffDecode,1, 1
+set_geometry,None, 1
+uvesafb_setcmap,1, 0
+__get_data_block,0, 0
+authDigestNonceLink,0, 0
+PHP_FUNCTION,0, 1
+SWFInput_readSBits,1, 1
+read_SubStreamsInfo,0, 0
+_zend_hash_init,It appears there is an issue with retrieving the specific details and line changes for the function "_zend_hash_init". Without this information, I cannot accurately determine if the code snippet has the specified vulnerability (CWE-190).
+
+Given the lack of detailed response from the tools, I must return -1 as I am unsure about the presence of the vulnerability in the provided code snippet. 
+
+Return: -1, 1
