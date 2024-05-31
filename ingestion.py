@@ -20,14 +20,18 @@ from llama_index.core.agent import AgentRunner
 from openai import BadRequestError
 
 random.seed(2048)
+# TODO CHANGE ME
 DEFAULT_LOG_PATH = './logs/scanner_llama_index_190.log'
-DEFAULT_DATASET_DIR_PATH = "./cve_dataset"
+DEFAULT_RESULT_FILE_PATH = "./results/llama_index_190.csv"
 DEFAULT_CHAT_HISTORY_LOG = "./logs/{cwe_target}_chat_history.log"
+
+DEFAULT_DATASET_DIR_PATH = "./cve_dataset"
+
 
 DEFAULT_QUERY_MODEL = "gpt-4-turbo"
 DEFAULT_EMBEDDING_MODEL = "text-embedding-ada-002"
 
-DEFAULT_RESULT_FILE_PATH = "./results/llama_index_190.csv"
+
 
 DEFAULT_AGENT_PROMPT = """
 When I give you a function, I want you to get the tools related to function name to answer the questino.
@@ -194,6 +198,11 @@ if __name__ == "__main__":
     # load the api key
     get_open_ai_key()
     nest_asyncio.apply()
+    """
+    0: CWE-787: Writing data outside the bounds of allocated memory.
+    1: CWE-190: Arithmetic operation results in a value that exceeds the maximum for the data type.
+    2: CWE-125: Reading data outside the bounds of allocated memory.
+    """
     cwe_target = DEFAULT_CWE_TARGETS[1]
 
     Settings.llm = OpenAI(model=DEFAULT_QUERY_MODEL)
